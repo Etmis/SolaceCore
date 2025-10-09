@@ -1,0 +1,63 @@
+name: SolaceCore
+version: '1.0.0'
+main: com.etmisthefox.solacecore.SolaceCore
+api-version: '1.21'
+authors: [ EtmisTheFox ]
+description: skibidi plugin
+website: https://etmisthefox.com
+commands:
+  kick:
+    description: Vykopne hráče ze serveru
+    usage: /kick <player> [reason]
+    permission: solacecore.kick
+  ban:
+    description: Zabanovat hráče
+    usage: /ban <player> [reason]
+    permission: solacecore.ban
+  unban:
+    description: Odbanovat hráče
+    usage: /unban <player>
+    permission: solacecore.unban
+  tempban:
+    description: Temp Ban hráče
+    usage: /tempban <player> <time> [reason]
+    permission: solacecore.tempban
+  mute:
+    description: Mute hráče
+    usage: /mute <player> [reason]
+    permission: solacecore.mute
+  tempmute:
+    description: Tempmute hráče
+    usage: /tempmute <player> <time> [reason]
+    permission: solacecore.tempmute
+  unmute:
+    description: Unmute hráče
+    usage: /unmute <player>
+    permission: solacecore.unmute
+  menu:
+    description: Main menu
+    usage: /menu <player>
+    permission: solacecore.menu
+permissions:
+  solacecore.kick:
+    default: op
+  solacecore.ban:
+    default: op
+  solacecore.tempban:
+    default: op
+  solacecore.unban:
+    default: op
+  solacecore.mute:
+    default: op
+  solacecore.tempmute:
+    default: op
+  solacecore.unmute:
+    default: op
+  solacecore.banprotection:
+    default: op
+  solacecore.kickprotection:
+    default: op
+  solacecore.muteprotection:
+    default: op
+  solacecore.menu:
+    default: op

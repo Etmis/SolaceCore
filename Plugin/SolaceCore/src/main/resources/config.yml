@@ -1,0 +1,9 @@
+language: en
+
+database:
+# only mysql (for now)
+  ip_address: "127.0.0.1"
+  port: "3306"
+  database_name: "solacecore"
+  user: "root"
+  password: ""
