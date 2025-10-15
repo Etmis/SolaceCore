@@ -50,7 +50,7 @@ public final class BanCommand implements CommandExecutor {
 
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, (Player) sender, Bukkit.getPlayer(args[0]), reason);
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, (Player) sender, Bukkit.getPlayer(args[0]), reason, null);
         return true;
     }
 }

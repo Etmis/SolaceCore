@@ -4,7 +4,8 @@ import type { Player, Stats } from './types.ts'
 import PlayerCard from './components/PlayerCard.tsx'
 import PlayerModal from './components/PlayerModal.tsx'
 import StatsBar from './components/StatsBar.tsx'
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaHeart } from "react-icons/fa";
+import { FiMoon, FiSun } from "react-icons/fi";
 
 export default function App() {
   const [players, setPlayers] = useState<Player[]>([])
@@ -13,6 +14,14 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Player | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
+  const [cookieAccepted, setCookieAccepted] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('cookieConsent') === 'accepted'
+  })
+  const [showCookie, setShowCookie] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('cookieConsent') !== 'accepted'
+  })
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark'
     const saved = localStorage.getItem('theme') as 'dark' | 'light' | null
@@ -35,7 +44,7 @@ export default function App() {
           setStats(st)
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? 'Nepodařilo se načíst data')
+        if (!cancelled) setError(e?.message ?? 'Failed to load data')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -55,7 +64,7 @@ export default function App() {
     return (
       <div className="container">
         <header className="header">
-          <h1>Hráči</h1>
+          <h1>Players</h1>
           <div className="search skeleton" style={{height: 44}} />
         </header>
         <section className="stats">
@@ -82,9 +91,9 @@ export default function App() {
     return (
       <div className="container">
         <header className="header">
-          <h1>Hráči</h1>
+          <h1>Players</h1>
         </header>
-        <p className="error">Chyba: {error}</p>
+        <p className="error">Error: {error}</p>
       </div>
     )
   }
@@ -92,27 +101,34 @@ export default function App() {
   return (
     <div className="container">
       <header className="header">
-        <h1>Hráči</h1>
-        <div style={{display:'flex', gap:16, alignItems:'center'}}>
+        <h1>Players</h1>
+        <div className="header-actions">
           <div className="search-wrap">
             <FaSearch className="search-icon" size={18} aria-hidden="true" />
             <input
               className="search"
               type="search"
-              placeholder="Hledat hráče…"
+              placeholder="Search players…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              aria-label="Hledat hráče"
+              aria-label="Search players"
             />
           </div>
           <button
+            type="button"
             className="theme-toggle"
+            data-theme={theme}
             onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-            aria-label={theme === 'dark' ? 'Přepnout na světlý motiv' : 'Přepnout na tmavý motiv'}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             aria-pressed={theme === 'dark'}
-            title={theme === 'dark' ? 'Světlý motiv' : 'Tmavý motiv'}
+            title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+            <span className="theme-toggle-inner" aria-hidden="true">
+              <FiSun className="theme-icon theme-icon--sun" aria-hidden="true" focusable="false" />
+              <FiMoon className="theme-icon theme-icon--moon" aria-hidden="true" focusable="false" />
+              <span className="theme-toggle-spark theme-toggle-spark--1" />
+              <span className="theme-toggle-spark theme-toggle-spark--2" />
+            </span>
           </button>
         </div>
       </header>
@@ -126,8 +142,8 @@ export default function App() {
         {filtered.length === 0 && (
           <div className="empty">
             <div className="empty-icon" aria-hidden="true">🔍</div>
-            <div className="empty-title">Nic nenalezeno</div>
-            <div className="empty-desc">Zkuste upravit dotaz nebo vymazat hledání.</div>
+            <div className="empty-title">Nothing found</div>
+            <div className="empty-desc">Try adjusting your query or clear the search.</div>
           </div>
         )}
       </main>
@@ -137,8 +153,46 @@ export default function App() {
       )}
 
       <footer className="footer">
-        <span>SolaceCore</span>
+        <div className="footer-brand">SolaceCore</div>
+        <div className="footer-links">
+          <a className="link" href="/privacy">Privacy Policy</a>
+          <a className="link" href="/terms">Terms of Service</a>
+          <button className="link" onClick={() => setShowCookie(true)}>Cookies settings</button>
+        </div>
+        <div className="footer-meta">
+          <span>© 2025</span>
+          <span>•</span>
+          <span>Made with <span className="heart"><FaHeart /></span> by</span>
+          <a className="link" href="https://EtmisTheFox.com" target="_blank" rel="noreferrer">EtmisTheFox</a>
+        </div>
       </footer>
+
+      {showCookie && (
+        <div className="cookie-backdrop" role="dialog" aria-modal="true" aria-labelledby="cookie-title">
+          <div className="cookie-modal">
+            <div className="cookie-header">
+              <h2 id="cookie-title">Privacy and cookies</h2>
+            </div>
+            <div className="cookie-content">
+              <p>This site does not use non‑essential cookies. We only store technical preferences (theme, consent) in LocalStorage.</p>
+              <p>See our <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a> for details.</p>
+            </div>
+            <div className="cookie-actions">
+              <button className="btn" onClick={() => { localStorage.setItem('cookieConsent', 'accepted'); setCookieAccepted(true); setShowCookie(false) }}>Accept</button>
+              <button className="btn btn-ghost" onClick={() => setShowCookie(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {!showCookie && !cookieAccepted && (
+        <div className="cookie-bar" role="region" aria-label="Privacy">
+          <span>This site stores only necessary technical data (theme, consent). <a href="/privacy" className="link">Learn more</a></span>
+          <div style={{display:'flex', gap:8}}>
+            <button className="btn btn-sm" onClick={() => { localStorage.setItem('cookieConsent', 'accepted'); setCookieAccepted(true); }}>OK</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setShowCookie(true)}>Settings</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

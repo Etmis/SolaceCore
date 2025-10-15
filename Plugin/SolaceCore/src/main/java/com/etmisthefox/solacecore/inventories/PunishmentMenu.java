@@ -139,17 +139,17 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         greenWoolMeta.setDisplayName("Accept");
         greenWool.setItemMeta(greenWoolMeta);
         contents.set(5, 8, ClickableItem.of(greenWool, e -> {
-            String r = getReasonOrDefault(player);
+            String reason = getReasonOrDefault(player);
             Long duration = getDuration(player);
             switch (punishmentType) {
                 case KICK -> {
                     player.closeInventory();
-                    PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, player, target, r);
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, player, target, reason, null);
                     REASONS.remove(player.getUniqueId());
                     DURATIONS.remove(player.getUniqueId());
                 }
                 case BAN -> {
-                    PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, player, target, r);
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, player, target, reason, null);
                     REASONS.remove(player.getUniqueId());
                     DURATIONS.remove(player.getUniqueId());
                 }
@@ -158,7 +158,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
                         player.sendMessage(lang.getMessage("errors.invalid_time"));
                         return;
                     }
-                    PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPBAN, player, target, r, duration);
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPBAN, player, target, reason, duration);
                     REASONS.remove(player.getUniqueId());
                     DURATIONS.remove(player.getUniqueId());
                 }

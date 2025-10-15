@@ -17,6 +17,7 @@ const DB_NAME = process.env.DB_NAME || 'solacecore'
 const SKIN_TTL_DAYS = parseInt(process.env.SKIN_TTL_DAYS || '30', 10)
 const SKIN_TTL_MS = SKIN_TTL_DAYS * 24 * 60 * 60 * 1000
 const CACHE_ROOT = path.resolve(process.cwd(), 'server', 'cache', 'skins')
+const DEFAULT_STEVE_PATH = path.resolve(process.cwd(), 'server', 'assets', 'steve.png')
 
 // Create a MySQL/MariaDB pool
 const pool = mysql.createPool({
@@ -70,7 +71,7 @@ app.get('/api/players/:uuid/punishments', async (req, res) => {
     )
     const player = Array.isArray(playerRows) ? playerRows[0] : null
     if (!player) {
-      return res.status(404).json({ error: 'Hráč nenalezen' })
+      return res.status(404).json({ error: 'Player not found' })
     }
     const playerName = player.name
 
@@ -154,6 +155,13 @@ async function fetchBuffer(url) {
   })
 }
 
+function toIso(value) {
+  if (!value) return null
+  if (value instanceof Date) return value.toISOString()
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 // Track ongoing refreshes to prevent duplicate upstream requests per id
 const inflight = new Map()
 
@@ -183,20 +191,24 @@ app.get('/api/skins/:id/bust', async (req, res) => {
 
     // Fetch from upstream and (re)cache with in-flight dedupe
     const doRefresh = async () => {
-      const upstream = `https://starlightskins.lunareclipse.studio/render/ultimate/${encodeURIComponent(id)}/bust`
-      let buf
+      const upstream = `https://starlightskins.lunareclipse.studio/render/default/${encodeURIComponent(id)}/bust`
       try {
-        buf = await fetchBuffer(upstream)
+        const buf = await fetchBuffer(upstream)
+        await fs.writeFile(filePath, buf)
       } catch (err) {
-        // If we have a stale file, serve it as a fallback
+        // Upstream failed. If we already have a file (even stale), keep it and let unified send below serve it.
         if (fssync.existsSync(filePath)) {
-          res.setHeader('Content-Type', 'image/png')
-          res.setHeader('Cache-Control', 'public, max-age=3600') // 1h for stale
-          return res.sendFile(filePath)
+          return
         }
-        throw err
+        // Otherwise, try default Steve fallback written to cache path
+        try {
+          const fallback = await fs.readFile(DEFAULT_STEVE_PATH)
+          await fs.writeFile(filePath, fallback)
+        } catch (e2) {
+          // No fallback available, rethrow original error
+          throw err
+        }
       }
-      await fs.writeFile(filePath, buf)
     }
 
     if (inflight.has(safeId)) {
@@ -224,6 +236,46 @@ app.get('/api/skins/:id/bust', async (req, res) => {
       return res.sendFile(filePath)
     }
     return res.status(500).json({ error: 'Failed to get skin', detail: String(e?.message || e) })
+  }
+})
+
+app.get('/api/players/:id', async (req, res) => {
+  const { id } = req.params
+  try {
+    const [playerRows] = await pool.query(
+      'SELECT uuid, name, lastLogin FROM players WHERE uuid = ? OR name = ? LIMIT 1',
+      [id, id]
+    )
+
+    const player = Array.isArray(playerRows) ? playerRows[0] : null
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' })
+    }
+
+    const [punRows] = await pool.query(
+      'SELECT id, reason, operator, punishmentType, start, `end`, duration, isActive FROM punishments WHERE player_name = ? ORDER BY start DESC',
+      [player.name]
+    )
+
+    const punishments = (punRows || []).map((row) => ({
+      id: row.id,
+      type: row.punishmentType,
+      reason: row.reason ?? 'No reason specified',
+      operator: row.operator ?? '-',
+      start: toIso(row.start),
+      end: toIso(row.end),
+      duration: row.duration === null || row.duration === undefined ? null : Number(row.duration),
+      isActive: row.isActive === 1 || row.isActive === true,
+    }))
+
+    res.json({
+      uuid: player.uuid,
+      name: player.name,
+      lastLogin: toIso(player.lastLogin),
+      punishments,
+    })
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
   }
 })
 

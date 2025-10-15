@@ -1,4 +1,4 @@
-import type { Player, Punishment, Stats } from './types.ts'
+import type { Player, PlayerDetails, Punishment, Stats } from './types.ts'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
@@ -23,4 +23,8 @@ export async function fetchPunishments(uuid: string): Promise<Punishment[]> {
 
 export async function fetchStats(): Promise<Stats> {
   return get<Stats>('/api/stats')
+}
+
+export async function fetchPlayerDetails(identifier: string): Promise<PlayerDetails> {
+  return get<PlayerDetails>(`/api/players/${encodeURIComponent(identifier)}`)
 }

@@ -4,9 +4,9 @@ export default function StatsBar({ stats }: { stats?: Stats }) {
   if (!stats) {
     return (
       <section className="stats">
-        <div className="stat" aria-busy="true"><span className="stat-label">Bany dnes</span><span className="stat-value">—</span></div>
-        <div className="stat" aria-busy="true"><span className="stat-label">Bany celkem</span><span className="stat-value">—</span></div>
-        <div className="stat" aria-busy="true"><span className="stat-label">Prohřešky celkem</span><span className="stat-value">—</span></div>
+  <div className="stat" aria-busy="true"><span className="stat-label">Bans today</span><span className="stat-value">—</span></div>
+  <div className="stat" aria-busy="true"><span className="stat-label">Total bans</span><span className="stat-value">—</span></div>
+  <div className="stat" aria-busy="true"><span className="stat-label">Total punishments</span><span className="stat-value">—</span></div>
       </section>
     )
   }
@@ -14,15 +14,15 @@ export default function StatsBar({ stats }: { stats?: Stats }) {
   return (
     <section className="stats">
       <div className="stat" aria-live="polite">
-        <span className="stat-label">Bany dnes</span>
+  <span className="stat-label">Bans today</span>
         <span className="stat-value">{stats.bansToday ?? 0}</span>
       </div>
       <div className="stat" aria-live="polite">
-        <span className="stat-label">Bany celkem</span>
+  <span className="stat-label">Total bans</span>
         <span className="stat-value">{stats.totalBans ?? 0}</span>
       </div>
       <div className="stat" aria-live="polite">
-        <span className="stat-label">Prohřešky celkem</span>
+  <span className="stat-label">Total punishments</span>
         <span className="stat-value">{stats.totalPunishments ?? 0}</span>
       </div>
     </section>

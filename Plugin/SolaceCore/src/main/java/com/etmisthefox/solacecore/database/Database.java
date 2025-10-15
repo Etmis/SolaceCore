@@ -2,7 +2,6 @@ package com.etmisthefox.solacecore.database;
 
 import com.etmisthefox.solacecore.SolaceCore;
 import com.etmisthefox.solacecore.models.Punishment;
-import org.bukkit.entity.Player;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -28,10 +27,6 @@ public final class Database {
         String url = "jdbc:mysql://" + this.plugin.getConfig().getString("database.ip_address") + "/" + this.plugin.getConfig().getString("database.database_name");
         String user = this.plugin.getConfig().getString("database.user");
         String password = this.plugin.getConfig().getString("database.password");
-
-        //String url = "jdbc:mysql://78.80.158.3/xban";
-        //String user = "xban";
-        //String password = "963852741";
 
         this.connection = DriverManager.getConnection(url, user, password);
         plugin.getLogger().info("Connected to the database.");
@@ -148,11 +143,14 @@ public final class Database {
     }
 
     public void unpunishPlayer(String name, String punishmentType) throws SQLException {
-        String query = "UPDATE punishments SET isActive = FALSE, end = ? WHERE player_name = ? AND punishmentType = ? AND isActive = TRUE";
+        // Nastaví konec na aktuální čas, spočítá a uloží duration (v sekundách) jako rozdíl mezi start a tímto koncem a deaktivuje trest
+        String query = "UPDATE punishments SET isActive = FALSE, end = ?, duration = TIMESTAMPDIFF(SECOND, start, ?) WHERE player_name = ? AND punishmentType = ? AND isActive = TRUE";
         try (PreparedStatement statement = getConnection().prepareStatement(query)) {
-            statement.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
-            statement.setString(2, name);
-            statement.setString(3, punishmentType);
+            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            statement.setTimestamp(1, now);
+            statement.setTimestamp(2, now);
+            statement.setString(3, name);
+            statement.setString(4, punishmentType);
             statement.executeUpdate();
         }
     }

@@ -1,8 +1,10 @@
 package com.etmisthefox.solacecore.commands;
 
 import com.etmisthefox.solacecore.database.Database;
+import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.models.Punishment;
+import com.etmisthefox.solacecore.utils.PunishmentUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -75,23 +77,7 @@ public final class TempbanCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("no_reason") : reasonBuilder.toString();
 
-        target.kickPlayer(lang.getMessage("player_messages.tempbanned",
-                "time", formatDuration(duration),
-                "reason", reason,
-                "operator", sender.getName()));
-
-        Punishment punishment = new Punishment(0, targetName, reason, sender.getName(), "tempban", LocalDateTime.now(), null, duration, true);
-        try {
-            database.createPunishment(punishment);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        Bukkit.broadcastMessage(lang.getMessage("punishment.tempban_success",
-                "operator", sender.getName(),
-                "player", targetName,
-                "time", formatDuration(duration),
-                "reason", reason));
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPBAN, (Player) sender, target, reason, duration);
         return true;
     }
 }

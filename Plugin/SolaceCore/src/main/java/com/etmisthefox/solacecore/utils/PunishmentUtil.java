@@ -14,9 +14,9 @@ import java.util.List;
 public final class PunishmentUtil {
 
     // Původní API zachováno – volá novou metodu bez duration
-    public static void executePunishment(Database database, LanguageManager lang, PunishmentType punishmentType, Player sender, Player target, String reason) {
-        executePunishment(database, lang, punishmentType, sender, target, reason, null);
-    }
+//    public static void executePunishment(Database database, LanguageManager lang, PunishmentType punishmentType, Player sender, Player target, String reason) {
+//        executePunishment(database, lang, punishmentType, sender, target, reason, null);
+//    }
 
     public static void executePunishment(Database database, LanguageManager lang, PunishmentType punishmentType, Player sender, Player target, String reason, Long durationSeconds) {
         if (target == null) {
@@ -44,7 +44,6 @@ public final class PunishmentUtil {
 
         switch (punishmentType) {
             case BAN -> {
-                // Permanent ban
                 target.kickPlayer(lang.getMessage("player_messages.banned", "reason", reason, "operator", sender.getName()));
                 Punishment punishment = new Punishment(0, targetName, reason, sender.getName(), "ban", LocalDateTime.now(), null, null, true);
                 try {

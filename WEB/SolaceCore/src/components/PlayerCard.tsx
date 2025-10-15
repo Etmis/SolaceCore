@@ -11,16 +11,16 @@ export default function PlayerCard({
   onClick?: () => void
 }) {
   return (
-  <button className="card" onClick={onClick} title={`${player.name} (${player.uuid})`} aria-label={`Zobrazit hráče ${player.name}`}>
+  <button className="card" onClick={onClick} title={`${player.name} (${player.uuid})`} aria-label={`View player ${player.name}`}>
       <div className="card-image">
         <img
           src={skinUrl(player)}
-          alt={`Skin hráče ${player.name}`}
+          alt={`Player skin ${player.name}`}
           loading="lazy"
           onError={(e) => {
-            // jednoduchý fallback
+            // simple fallback
             (e.currentTarget as HTMLImageElement).src =
-              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260"><rect width="100%" height="100%" fill="%23eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="sans-serif">Skin nedostupný</text></svg>'
+              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260"><rect width="100%" height="100%" fill="%23eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="sans-serif">Skin unavailable</text></svg>'
           }}
         />
       </div>

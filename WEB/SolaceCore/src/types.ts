@@ -10,6 +10,22 @@ export type Punishment = {
   operator: string
 }
 
+export type PunishmentDetail = {
+  id: number
+  type: string
+  reason: string
+  operator: string
+  start: string | null
+  end: string | null
+  duration: number | null
+  isActive: boolean
+}
+
+export type PlayerDetails = Player & {
+  lastLogin: string | null
+  punishments: PunishmentDetail[]
+}
+
 export type Stats = {
   bansToday?: number
   totalBans?: number
