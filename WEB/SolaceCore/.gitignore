@@ -1,4 +1,8 @@
-# Logs
+node_modules
+dist
+.env
+.env.local
+*.log# Logs
 logs
 *.log
 npm-debug.log*
