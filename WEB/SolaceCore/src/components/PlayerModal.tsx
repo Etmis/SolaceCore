@@ -34,7 +34,7 @@ export default function PlayerModal({
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
-          <h2>Historie prohřešků — {player.name}</h2>
+          <h2 style={{margin: 0}}>Historie prohřešků — {player.name}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Zavřít">✕</button>
         </header>
         <div className="modal-content">

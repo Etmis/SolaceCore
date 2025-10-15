@@ -1,7 +1,7 @@
 import type { Player } from '../types.ts'
 
 const skinUrl = (player: Player) =>
-  `https://starlightskins.lunareclipse.studio/render/ultimate/${encodeURIComponent(player.name || player.uuid)}/full`
+  `/api/skins/${encodeURIComponent(player.name || player.uuid)}/bust`
 
 export default function PlayerCard({
   player,
@@ -11,7 +11,7 @@ export default function PlayerCard({
   onClick?: () => void
 }) {
   return (
-    <button className="card" onClick={onClick} title={`${player.name} (${player.uuid})`}>
+  <button className="card" onClick={onClick} title={`${player.name} (${player.uuid})`} aria-label={`Zobrazit hráče ${player.name}`}>
       <div className="card-image">
         <img
           src={skinUrl(player)}

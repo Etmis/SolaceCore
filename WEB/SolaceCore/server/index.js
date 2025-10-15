@@ -1,7 +1,11 @@
-import 'dotenv/config'
+import 'dotenv/config' 
 import express from 'express'
 import mysql from 'mysql2/promise'
 import cors from 'cors'
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import fssync from 'node:fs'
+import https from 'node:https'
 
 // Basic config from env
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -10,6 +14,9 @@ const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10)
 const DB_USER = process.env.DB_USER || 'root'
 const DB_PASSWORD = process.env.DB_PASSWORD || ''
 const DB_NAME = process.env.DB_NAME || 'solacecore'
+const SKIN_TTL_DAYS = parseInt(process.env.SKIN_TTL_DAYS || '30', 10)
+const SKIN_TTL_MS = SKIN_TTL_DAYS * 24 * 60 * 60 * 1000
+const CACHE_ROOT = path.resolve(process.cwd(), 'server', 'cache', 'skins')
 
 // Create a MySQL/MariaDB pool
 const pool = mysql.createPool({
@@ -107,6 +114,116 @@ app.get('/api/stats', async (_req, res) => {
     })
   } catch (e) {
     res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// Simple sanitizer for file paths
+function sanitizeId(id) {
+  return String(id).replace(/[^a-zA-Z0-9_-]/g, '_')
+}
+
+async function ensureDir(dir) {
+  if (!fssync.existsSync(dir)) {
+    await fs.mkdir(dir, { recursive: true })
+  }
+}
+
+async function fetchBuffer(url) {
+  if (typeof fetch === 'function') {
+    const r = await fetch(url)
+    if (!r.ok) {
+      const err = new Error(`HTTP ${r.status}`)
+      err.status = r.status
+      throw err
+    }
+    const ab = await r.arrayBuffer()
+    return Buffer.from(ab)
+  }
+  // Fallback for older Node.js without global fetch
+  return await new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode && res.statusCode >= 400) {
+        reject(new Error(`HTTP ${res.statusCode}`))
+        res.resume()
+        return
+      }
+      const chunks = []
+      res.on('data', (c) => chunks.push(c))
+      res.on('end', () => resolve(Buffer.concat(chunks)))
+    }).on('error', reject)
+  })
+}
+
+// Track ongoing refreshes to prevent duplicate upstream requests per id
+const inflight = new Map()
+
+// GET /api/skins/:id/bust -> PNG image (cached for 30 days on disk)
+app.get('/api/skins/:id/bust', async (req, res) => {
+  const { id } = req.params
+  const force = req.query.force === '1' || req.query.force === 'true'
+  const safeId = sanitizeId(id)
+  const dir = path.join(CACHE_ROOT, safeId)
+  const filePath = path.join(dir, 'bust.png')
+
+  try {
+    await ensureDir(dir)
+
+    // Serve from cache if fresh and not forced
+    if (!force && fssync.existsSync(filePath)) {
+      try {
+        const st = await fs.stat(filePath)
+        const age = Date.now() - st.mtimeMs
+        if (age < SKIN_TTL_MS && st.size > 0) {
+          res.setHeader('Content-Type', 'image/png')
+          res.setHeader('Cache-Control', 'public, max-age=86400') // 1 day browser cache
+          return res.sendFile(filePath)
+        }
+      } catch {}
+    }
+
+    // Fetch from upstream and (re)cache with in-flight dedupe
+    const doRefresh = async () => {
+      const upstream = `https://starlightskins.lunareclipse.studio/render/ultimate/${encodeURIComponent(id)}/bust`
+      let buf
+      try {
+        buf = await fetchBuffer(upstream)
+      } catch (err) {
+        // If we have a stale file, serve it as a fallback
+        if (fssync.existsSync(filePath)) {
+          res.setHeader('Content-Type', 'image/png')
+          res.setHeader('Cache-Control', 'public, max-age=3600') // 1h for stale
+          return res.sendFile(filePath)
+        }
+        throw err
+      }
+      await fs.writeFile(filePath, buf)
+    }
+
+    if (inflight.has(safeId)) {
+      try {
+        await inflight.get(safeId)
+      } catch {}
+    } else {
+      const p = doRefresh()
+      inflight.set(safeId, p)
+      try {
+        await p
+      } finally {
+        inflight.delete(safeId)
+      }
+    }
+
+    res.setHeader('Content-Type', 'image/png')
+    res.setHeader('Cache-Control', 'public, max-age=86400')
+    return res.sendFile(filePath)
+  } catch (e) {
+    // On error, try serving existing cache as best effort
+    if (fssync.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'image/png')
+      res.setHeader('Cache-Control', 'public, max-age=3600')
+      return res.sendFile(filePath)
+    }
+    return res.status(500).json({ error: 'Failed to get skin', detail: String(e?.message || e) })
   }
 })
 
