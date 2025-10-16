@@ -8,6 +8,7 @@ export type Punishment = {
   reason: string
   date: string // ISO string nebo timestamp
   operator: string
+  isActive?: boolean
 }
 
 export type PunishmentDetail = {

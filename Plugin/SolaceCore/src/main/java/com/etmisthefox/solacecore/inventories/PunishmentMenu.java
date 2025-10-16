@@ -162,11 +162,29 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
                     REASONS.remove(player.getUniqueId());
                     DURATIONS.remove(player.getUniqueId());
                 }
-                case IPBAN, MUTE, TEMPMUTE -> {
-                    // TODO: Implementace dalších typů trestů s využitím r + duration (pro TEMPMUTE)
+                case IPBAN -> {
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, player, target, reason, null);
+                    REASONS.remove(player.getUniqueId());
+                    DURATIONS.remove(player.getUniqueId());
+                }
+                case MUTE -> {
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.MUTE, player, target, reason, null);
+                    REASONS.remove(player.getUniqueId());
+                    DURATIONS.remove(player.getUniqueId());
+                }
+                case TEMPMUTE -> {
+                    if (duration == null) {
+                        player.sendMessage(lang.getMessage("errors.invalid_time"));
+                        return;
+                    }
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPMUTE, player, target, reason, duration);
+                    REASONS.remove(player.getUniqueId());
+                    DURATIONS.remove(player.getUniqueId());
                 }
                 case WARN -> {
-                    // TODO: warn
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, player, target, reason, null);
+                    REASONS.remove(player.getUniqueId());
+                    DURATIONS.remove(player.getUniqueId());
                 }
             }
         }));

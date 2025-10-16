@@ -20,6 +20,8 @@ messages:
     tempban_success: "{operator} has temporarily banned player {player} for {time}. Reason: {reason}"
     unban_success: "Player {player} has been unbanned."
     kick_success: "Player {player} has been kicked. Reason: {reason}"
+    ipban_success: "Player {player} has been IP-banned. Reason: {reason}"
+    warn_success: "Player {player} has been warned. Reason: {reason}"
     kick_protection: "Player {player} can't be kicked because they have kick protection"
     ban_protection: "Player {player} can't be banned because they have ban protection"
   player_messages:
@@ -29,6 +31,8 @@ messages:
     muted: "You have been muted! Reason: {reason}"
     tempmuted: "You have been temporarily muted for {time}! Reason: {reason}"
     unmuted: "Your mute has been lifted! You can chat again."
+    ipbanned: "You have been IP-banned! Reason: {reason}. Banned by: {operator}"
+    warned: "You have been warned! Reason: {reason}. Warned by: {operator}"
   errors:
     invalid_time: "Invalid time format. Use: 10m, 1h, 2d."
     no_permission: "You do not have permission to use this command."

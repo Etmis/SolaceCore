@@ -84,17 +84,18 @@ app.get('/api/players/:uuid/punishments', async (req, res) => {
     }
     const playerName = player.name
 
-    const [punRows] = await pool.query(
-      'SELECT reason, operator, punishmentType, start FROM punishments WHERE player_name = ? ORDER BY start DESC',
-      [playerName]
-    )
+      const [punRows] = await pool.query(
+        'SELECT reason, operator, punishmentType, start, isActive FROM punishments WHERE player_name = ? AND isActive = 1 ORDER BY start DESC',
+        [playerName]
+      )
 
-    const items = (punRows || []).map((r) => ({
-      type: r.punishmentType,
-      reason: r.reason ?? 'No reason specified',
-      date: r.start instanceof Date ? r.start.toISOString() : r.start,
-      operator: r.operator ?? '-',
-    }))
+      const items = (punRows || []).map((r) => ({
+        type: r.punishmentType,
+        reason: r.reason ?? 'No reason specified',
+        date: r.start instanceof Date ? r.start.toISOString() : r.start,
+        operator: r.operator ?? '-',
+        isActive: r.isActive === 1 || r.isActive === true,
+      }))
 
     res.json(items)
   } catch (e) {

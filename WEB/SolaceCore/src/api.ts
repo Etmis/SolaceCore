@@ -18,21 +18,21 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export async function fetchPlayers(): Promise<Player[]> {
-  return get<Player[]>('http://localhost:3001/api/players')
+  return get<Player[]>("/api/players")
 }
 
 export async function fetchPunishments(uuid: string): Promise<Punishment[]> {
-  return get<Punishment[]>(`http://localhost:3001/api/players/${encodeURIComponent(uuid)}/punishments`)
+  return get<Punishment[]>(`/api/players/${encodeURIComponent(uuid)}/punishments`)
 }
 
 export async function fetchStats(): Promise<Stats> {
-  return get<Stats>('http://localhost:3001/api/stats')
+  return get<Stats>("/api/stats")
 }
 
 export async function fetchPlayerDetails(identifier: string): Promise<PlayerDetails> {
-  return get<PlayerDetails>(`http://localhost:3001/api/players/${encodeURIComponent(identifier)}`)
+  return get<PlayerDetails>(`/api/players/${encodeURIComponent(identifier)}`)
 }
 
 export function getPlayerSkinUrl(identifier: string): string {
-  return resolvePath(`http://localhost:3001/api/skins/${encodeURIComponent(identifier)}/bust`)
+  return resolvePath(`/api/skins/${encodeURIComponent(identifier)}/bust`)
 }

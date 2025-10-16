@@ -43,7 +43,8 @@ public final class Database {
                        `ipAddress` VARCHAR(45) DEFAULT NULL,
                        `lastLogin` DATETIME DEFAULT NULL,
                        PRIMARY KEY (`name`),
-                       INDEX (`uuid`)
+                       INDEX (`uuid`),
+                       INDEX (`ipAddress`)
                     );
                     """;
             playersTableStatement.execute(playersTableSQL);
@@ -164,5 +165,31 @@ public final class Database {
                 plugin.getLogger().severe("Failed to close database connection: " + e.getMessage());
             }
         }
+    }
+
+    public List<Punishment> getPunishmentsByIp(String hostAddress) throws SQLException {
+        // Fetch punishments for all players that currently have the given IP in players table
+        String query = "SELECT p.* FROM punishments p JOIN players pl ON pl.name = p.player_name WHERE pl.ipAddress = ? AND p.isActive = TRUE";
+        List<Punishment> punishments = new ArrayList<>();
+        try (PreparedStatement statement = getConnection().prepareStatement(query)) {
+            statement.setString(1, hostAddress);
+            try (ResultSet results = statement.executeQuery()) {
+                while (results.next()) {
+                    int id = results.getInt("id");
+                    String playerName = results.getString("player_name");
+                    String reason = results.getString("reason");
+                    String operator = results.getString("operator");
+                    String punishmentType = results.getString("punishmentType");
+                    Timestamp startTimestamp = results.getTimestamp("start");
+                    LocalDateTime start = (startTimestamp != null) ? startTimestamp.toLocalDateTime() : null;
+                    Timestamp endTimestamp = results.getTimestamp("end");
+                    LocalDateTime end = (endTimestamp != null) ? endTimestamp.toLocalDateTime() : null;
+                    Long duration = results.getObject("duration") != null ? results.getLong("duration") : null;
+                    boolean isActive = results.getBoolean("isActive");
+                    punishments.add(new Punishment(id, playerName, reason, operator, punishmentType, start, end, duration, isActive));
+                }
+            }
+        }
+        return punishments;
     }
 }

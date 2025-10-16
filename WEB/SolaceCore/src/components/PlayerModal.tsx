@@ -30,19 +30,20 @@ export default function PlayerModal({
     }
   }, [player.uuid])
 
-  const summaries = useMemo(() => {
-    if (!items) return []
-    return items.slice(0, 4)
-  }, [items])
+  const activeItems = useMemo(() => (items || []).filter(p => p.isActive !== false), [items])
 
-  const hasMore = (items?.length ?? 0) > summaries.length
+  const summaries = useMemo(() => {
+    if (!activeItems) return []
+    return activeItems.slice(0, 4)
+  }, [activeItems])
+  const hasMore = (activeItems?.length ?? 0) > summaries.length
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="player-modal-title" onClick={(e) => e.stopPropagation()}>
         <header className="modal-header">
           <div className="modal-title-group">
-            <p className="modal-eyebrow">Recent punishments</p>
+            <p className="modal-eyebrow">Active punishments</p>
             <h2 id="player-modal-title">{player.name}</h2>
           </div>
           <button className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
@@ -51,11 +52,11 @@ export default function PlayerModal({
           {loading && <p>Loading…</p>}
           {error && <p className="error">Error: {error}</p>}
           {!loading && !error && (
-            items && items.length > 0 ? (
+            activeItems && activeItems.length > 0 ? (
               <>
                 <div className="modal-intro">
                   <div className="modal-pill">
-                    <span className="modal-pill-value">{items.length}</span>
+                    <span className="modal-pill-value">{activeItems.length}</span>
                     <span className="modal-pill-label">total records</span>
                   </div>
                   <p className="muted">Showing the most recent {summaries.length} actions.</p>
@@ -77,10 +78,10 @@ export default function PlayerModal({
                     </article>
                   ))}
                 </div>
-                {hasMore && <p className="muted">Open details to explore the full history ({items.length - summaries.length} more entries).</p>}
+                {hasMore && <p className="muted">Open details to explore the full history ({activeItems.length - summaries.length} more entries).</p>}
               </>
             ) : (
-              <p className="muted">No punishments.</p>
+              <p className="muted">No active punishments.</p>
             )
           )}
         </div>

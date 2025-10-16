@@ -35,6 +35,7 @@ public final class SolaceCore extends JavaPlugin {
 
         getCommand("kick").setExecutor(new KickCommand(database, lang));
         getCommand("ban").setExecutor(new BanCommand(database, lang));
+        getCommand("ipban").setExecutor(new IpbanCommand(database, lang));
         getCommand("tempban").setExecutor(new TempbanCommand(database, lang));
         getCommand("unban").setExecutor(new UnbanCommand(database, lang));
         getCommand("mute").setExecutor(new MuteCommand(database, lang));

@@ -14,6 +14,10 @@ commands:
     description: Zabanovat hráče
     usage: /ban <player> [reason]
     permission: solacecore.ban
+  ipban:
+    description: IP Ban hráče
+    usage: /ipban <player> [reason]
+    permission: solacecore.ipban
   unban:
     description: Odbanovat hráče
     usage: /unban <player>
@@ -43,6 +47,8 @@ permissions:
     default: op
   solacecore.ban:
     default: op
+  solacecore.ipban:
+    default: op
   solacecore.tempban:
     default: op
   solacecore.unban:
@@ -52,6 +58,8 @@ permissions:
   solacecore.tempmute:
     default: op
   solacecore.unmute:
+    default: op
+  solacecore.warn:
     default: op
   solacecore.banprotection:
     default: op

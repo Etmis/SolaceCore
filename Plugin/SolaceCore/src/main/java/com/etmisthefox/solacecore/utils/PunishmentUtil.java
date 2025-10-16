@@ -44,6 +44,11 @@ public final class PunishmentUtil {
 
         switch (punishmentType) {
             case BAN -> {
+                if (!sender.hasPermission("solacecore.ban")) {
+                    sender.sendMessage(lang.getMessage("errors.no_permission"));
+                    return;
+                }
+
                 target.kickPlayer(lang.getMessage("player_messages.banned", "reason", reason, "operator", sender.getName()));
                 Punishment punishment = new Punishment(0, targetName, reason, sender.getName(), "ban", LocalDateTime.now(), null, null, true);
                 try {
@@ -54,6 +59,10 @@ public final class PunishmentUtil {
                 Bukkit.broadcastMessage(lang.getMessage("punishment.ban_success", "player", targetName, "reason", reason));
             }
             case TEMPBAN -> {
+                if (!sender.hasPermission("solacecore.tempban")) {
+                    sender.sendMessage(lang.getMessage("errors.no_permission"));
+                    return;
+                }
                 if (durationSeconds == null || durationSeconds <= 0) {
                     sender.sendMessage(lang.getMessage("errors.invalid_time"));
                     return;
@@ -71,20 +80,114 @@ public final class PunishmentUtil {
                 Bukkit.broadcastMessage(lang.getMessage("punishment.tempban_success", "operator", sender.getName(), "player", targetName, "time", formatted, "reason", reason));
             }
             case IPBAN -> {
-                // TODO: implement IP ban
+                // Použijeme stejné oprávnění jako pro BAN
+                if (!sender.hasPermission("solacecore.ipban")) {
+                    sender.sendMessage(lang.getMessage("errors.no_permission"));
+                    return;
+                }
+                String operator = sender.getName();
+                // Informace hráči (kick)
+                target.kickPlayer(lang.getMessage("player_messages.ipbanned") != null
+                        ? lang.getMessage("player_messages.ipbanned", "reason", reason, "operator", operator)
+                        : lang.getMessage("player_messages.banned", "reason", reason, "operator", operator));
+                // Zápis trestu
+                Punishment punishment = new Punishment(0, targetName, reason, operator, "ipban", LocalDateTime.now(), null, null, true);
+                try {
+                    database.createPunishment(punishment);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                // Broadcast – pokud není definovaná ipban zpráva, použijeme obecný ban_success
+                String broadcast = lang.getMessage("punishment.ipban_success") != null
+                        ? lang.getMessage("punishment.ipban_success", "player", targetName, "reason", reason)
+                        : lang.getMessage("punishment.ban_success", "player", targetName, "reason", reason);
+                Bukkit.broadcastMessage(broadcast);
             }
             case MUTE -> {
-                // TODO: implement mute
+                if (!sender.hasPermission("solacecore.mute")) {
+                    sender.sendMessage(lang.getMessage("errors.no_permission"));
+                    return;
+                }
+                // Kontrola už existujícího mute/tempmute
+                try {
+                    List<Punishment> punishments = database.getPunishmentsByName(targetName);
+                    for (Punishment p : punishments) {
+                        String type = p.getPunishmentType();
+                        if ("mute".equalsIgnoreCase(type) || "tempmute".equalsIgnoreCase(type)) {
+                            sender.sendMessage(lang.getMessage("punishment.already_muted", "player", targetName));
+                            return;
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                target.sendMessage(lang.getMessage("player_messages.muted", "reason", reason));
+                Punishment punishment = new Punishment(0, targetName, reason, sender.getName(), "mute", LocalDateTime.now(), null, null, true);
+                try {
+                    database.createPunishment(punishment);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                Bukkit.broadcastMessage(lang.getMessage("punishment.mute_success", "player", targetName, "reason", reason));
             }
             case TEMPMUTE -> {
-                // TODO: implement temp mute
+                if (!sender.hasPermission("solacecore.tempmute")) {
+                    sender.sendMessage(lang.getMessage("errors.no_permission"));
+                    return;
+                }
+                if (durationSeconds == null || durationSeconds <= 0) {
+                    sender.sendMessage(lang.getMessage("errors.invalid_time"));
+                    return;
+                }
+                // Kontrola už existujícího mute/tempmute
+                try {
+                    List<Punishment> punishments = database.getPunishmentsByName(targetName);
+                    for (Punishment p : punishments) {
+                        String type = p.getPunishmentType();
+                        if ("mute".equalsIgnoreCase(type) || "tempmute".equalsIgnoreCase(type)) {
+                            sender.sendMessage(lang.getMessage("punishment.already_muted", "player", targetName));
+                            return;
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                String formatted = TimeUtil.formatDuration(durationSeconds);
+                target.sendMessage(lang.getMessage("player_messages.tempmuted", "time", formatted, "reason", reason));
+                Punishment punishment = new Punishment(0, targetName, reason, sender.getName(), "tempmute", LocalDateTime.now(), null, durationSeconds, true);
+                try {
+                    database.createPunishment(punishment);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                Bukkit.broadcastMessage(lang.getMessage("punishment.tempmute_success", "operator", sender.getName(), "player", targetName, "time", formatted, "reason", reason));
             }
             case KICK -> {
                 target.kickPlayer(lang.getMessage("player_messages.kicked", "reason", reason));
                 Bukkit.broadcastMessage(lang.getMessage("punishment.kick_success", "player", targetName, "reason", reason));
             }
             case WARN -> {
-                // TODO: implement warn
+                // WARN nemění stav v DB nijak kriticky, ale uložíme pro historii
+                Punishment punishment = new Punishment(0, targetName, reason, sender.getName(), "warn", LocalDateTime.now(), null, null, true);
+                try {
+                    database.createPunishment(punishment);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                // Zpráva hráči
+                String playerMsg = lang.getMessage("player_messages.warned");
+                if (playerMsg == null) {
+                    target.sendMessage("Byl jsi varován! Důvod: " + reason);
+                } else {
+                    target.sendMessage(lang.getMessage("player_messages.warned", "reason", reason, "operator", sender.getName()));
+                }
+                // Broadcast
+                String broadcast = lang.getMessage("punishment.warn_success");
+                if (broadcast == null) {
+                    Bukkit.broadcastMessage("Hráč " + targetName + " byl varován. Důvod: " + reason);
+                } else {
+                    Bukkit.broadcastMessage(lang.getMessage("punishment.warn_success", "player", targetName, "reason", reason));
+                }
             }
         }
     }

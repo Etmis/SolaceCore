@@ -20,6 +20,8 @@ messages:
     tempban_success: "{operator} dočasně zabanoval hráče {player} na {time}. Důvod: {reason}"
     unban_success: "Hráč {player} byl odbanován."
     kick_success: "Hráč {player} byl vykopnut. Důvod: {reason}"
+    ipban_success: "Hráč {player} byl zabanován podle IP. Důvod: {reason}"
+    warn_success: "Hráč {player} byl varován. Důvod: {reason}"
   player_messages:
     kicked: "Byl jsi vykopnut! Důvod: {reason}"
     banned: "Byl jsi permanentně zabanován! Důvod: {reason}. Ban udělil: {operator}"
@@ -27,6 +29,8 @@ messages:
     muted: "Byl jsi ztlumen! Důvod: {reason}"
     tempmuted: "Byl jsi dočasně ztlumen na {time}! Důvod: {reason}"
     unmuted: "Tvůj mute byl zrušen! Můžeš znovu psát."
+    ipbanned: "Byl jsi zabanován podle IP adresy! Důvod: {reason}. Ban udělil: {operator}"
+    warned: "Byl jsi varován! Důvod: {reason}. Varoval: {operator}"
   errors:
     invalid_time: "Neplatný formát doby. Použij: 10m, 1h, 2d."
     no_permission: "Nemáš oprávnění k tomuto příkazu."
