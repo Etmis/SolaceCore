@@ -1,7 +1,5 @@
 import type { Player } from '../types.ts'
-
-const skinUrl = (player: Player) =>
-  `/api/skins/${encodeURIComponent(player.name || player.uuid)}/bust`
+import { getPlayerSkinUrl } from '../api.ts'
 
 export default function PlayerCard({
   player,
@@ -14,7 +12,7 @@ export default function PlayerCard({
   <button className="card" onClick={onClick} title={`${player.name} (${player.uuid})`} aria-label={`View player ${player.name}`}>
       <div className="card-image">
         <img
-          src={skinUrl(player)}
+          src={getPlayerSkinUrl(player.name || player.uuid)}
           alt={`Player skin ${player.name}`}
           loading="lazy"
           onError={(e) => {

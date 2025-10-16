@@ -1,9 +1,13 @@
 import type { Player, PlayerDetails, Punishment, Stats } from './types.ts'
 
-const API_BASE = import.meta.env.VITE_API_BASE || ''
+const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '')
+
+function resolvePath(path: string) {
+  return `${API_BASE}${path}`
+}
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(resolvePath(path), {
     headers: { 'Accept': 'application/json' }
   })
   if (!res.ok) {
@@ -14,17 +18,21 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export async function fetchPlayers(): Promise<Player[]> {
-  return get<Player[]>('/api/players')
+  return get<Player[]>('http://localhost:3001/api/players')
 }
 
 export async function fetchPunishments(uuid: string): Promise<Punishment[]> {
-  return get<Punishment[]>(`/api/players/${encodeURIComponent(uuid)}/punishments`)
+  return get<Punishment[]>(`http://localhost:3001/api/players/${encodeURIComponent(uuid)}/punishments`)
 }
 
 export async function fetchStats(): Promise<Stats> {
-  return get<Stats>('/api/stats')
+  return get<Stats>('http://localhost:3001/api/stats')
 }
 
 export async function fetchPlayerDetails(identifier: string): Promise<PlayerDetails> {
-  return get<PlayerDetails>(`/api/players/${encodeURIComponent(identifier)}`)
+  return get<PlayerDetails>(`http://localhost:3001/api/players/${encodeURIComponent(identifier)}`)
+}
+
+export function getPlayerSkinUrl(identifier: string): string {
+  return resolvePath(`http://localhost:3001/api/skins/${encodeURIComponent(identifier)}/bust`)
 }

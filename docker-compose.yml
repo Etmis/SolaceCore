@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:11
+    container_name: solacecore-db
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Prague
+      MARIADB_DATABASE: solacecore
+      MARIADB_USER: solace
+      MARIADB_PASSWORD: solacepass
+      MARIADB_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306" # optional: expose to host
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build:
+      context: ./WEB/SolaceCore
+    container_name: solacecore-web
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # API server config
+      TZ: Europe/Prague
+      PORT: "3001"
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: solace
+      DB_PASSWORD: solacepass
+      DB_NAME: solacecore
+      ENABLE_CORS: "1" # frontend runs on 5173, API on 3001
+      FRONTEND_DIST: /app/dist
+      HOST: 0.0.0.0
+    ports:
+      - "5173:5173"
+      - "3001:3001"
+    restart: unless-stopped
+
+volumes:
+  db-data:

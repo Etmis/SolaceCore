@@ -6,6 +6,7 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import fssync from 'node:fs'
 import https from 'node:https'
+import { fileURLToPath } from 'node:url'
 
 // Basic config from env
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -16,16 +17,21 @@ const DB_PASSWORD = process.env.DB_PASSWORD || ''
 const DB_NAME = process.env.DB_NAME || 'solacecore'
 const SKIN_TTL_DAYS = parseInt(process.env.SKIN_TTL_DAYS || '30', 10)
 const SKIN_TTL_MS = SKIN_TTL_DAYS * 24 * 60 * 60 * 1000
-const CACHE_ROOT = path.resolve(process.cwd(), 'server', 'cache', 'skins')
-const DEFAULT_STEVE_PATH = path.resolve(process.cwd(), 'server', 'assets', 'steve.png')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const SERVER_ROOT = __dirname
+const CACHE_ROOT = path.join(SERVER_ROOT, 'cache', 'skins')
+const DEFAULT_STEVE_PATH = path.join(SERVER_ROOT, 'assets', 'steve.png')
+const FRONTEND_DIST = process.env.FRONTEND_DIST || path.join(SERVER_ROOT, '..', 'dist')
+const SPA_INDEX_PATH = path.join(FRONTEND_DIST, 'index.html')
 
 // Create a MySQL/MariaDB pool
 const pool = mysql.createPool({
-  host: "127.0.0.1",
-  port: "3306",
-  user: "root",
-  password: "",
-  database: "solacecore",
+  host: DB_HOST,
+  port: DB_PORT,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -39,6 +45,9 @@ const app = express()
 if (process.env.ENABLE_CORS === '1') {
   app.use(cors())
 }
+
+// Serve built frontend files when available
+app.use(express.static(FRONTEND_DIST, { index: false }))
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -277,6 +286,18 @@ app.get('/api/players/:id', async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: String(e?.message || e) })
   }
+})
+
+// SPA fallback so client-side routing works
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return next()
+  }
+  res.sendFile(SPA_INDEX_PATH, (err) => {
+    if (err) {
+      next(err)
+    }
+  })
 })
 
 app.listen(PORT, () => {
