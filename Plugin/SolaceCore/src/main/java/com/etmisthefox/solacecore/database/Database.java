@@ -119,7 +119,7 @@ public final class Database {
     }
 
     public List<Punishment> getPunishmentsByName(String name) throws SQLException {
-        String query = "SELECT * FROM punishments WHERE player_name = ? AND isActive = TRUE";
+        String query = "SELECT * FROM punishments WHERE player_name = ?";
         List<Punishment> punishments = new ArrayList<>();
         try (PreparedStatement statement = getConnection().prepareStatement(query)) {
             statement.setString(1, name);
@@ -144,7 +144,6 @@ public final class Database {
     }
 
     public void unpunishPlayer(String name, String punishmentType) throws SQLException {
-        // Nastaví konec na aktuální čas, spočítá a uloží duration (v sekundách) jako rozdíl mezi start a tímto koncem a deaktivuje trest
         String query = "UPDATE punishments SET isActive = FALSE, end = ?, duration = TIMESTAMPDIFF(SECOND, start, ?) WHERE player_name = ? AND punishmentType = ? AND isActive = TRUE";
         try (PreparedStatement statement = getConnection().prepareStatement(query)) {
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
@@ -167,12 +166,36 @@ public final class Database {
         }
     }
 
-    public List<Punishment> getPunishmentsByIp(String hostAddress) throws SQLException {
-        // Fetch punishments for all players that currently have the given IP in players table
-        String query = "SELECT p.* FROM punishments p JOIN players pl ON pl.name = p.player_name WHERE pl.ipAddress = ? AND p.isActive = TRUE";
+    public List<Punishment> getActivePunishmentsByIp(String hostAddress) throws SQLException {
+        String query = "SELECT p.* FROM punishments p JOIN players pl ON pl.name = p.player_name WHERE pl.ipAddress = ? AND p.punishmentType = 'ipban' AND p.isActive = TRUE";
         List<Punishment> punishments = new ArrayList<>();
         try (PreparedStatement statement = getConnection().prepareStatement(query)) {
             statement.setString(1, hostAddress);
+            try (ResultSet results = statement.executeQuery()) {
+                while (results.next()) {
+                    int id = results.getInt("id");
+                    String playerName = results.getString("player_name");
+                    String reason = results.getString("reason");
+                    String operator = results.getString("operator");
+                    String punishmentType = results.getString("punishmentType");
+                    Timestamp startTimestamp = results.getTimestamp("start");
+                    LocalDateTime start = (startTimestamp != null) ? startTimestamp.toLocalDateTime() : null;
+                    Timestamp endTimestamp = results.getTimestamp("end");
+                    LocalDateTime end = (endTimestamp != null) ? endTimestamp.toLocalDateTime() : null;
+                    Long duration = results.getObject("duration") != null ? results.getLong("duration") : null;
+                    boolean isActive = results.getBoolean("isActive");
+                    punishments.add(new Punishment(id, playerName, reason, operator, punishmentType, start, end, duration, isActive));
+                }
+            }
+        }
+        return punishments;
+    }
+
+    public List<Punishment> getActivePunishmentsByName(String name) throws SQLException {
+        String query = "SELECT * FROM punishments WHERE player_name = ? AND isActive = TRUE";
+        List<Punishment> punishments = new ArrayList<>();
+        try (PreparedStatement statement = getConnection().prepareStatement(query)) {
+            statement.setString(1, name);
             try (ResultSet results = statement.executeQuery()) {
                 while (results.next()) {
                     int id = results.getInt("id");

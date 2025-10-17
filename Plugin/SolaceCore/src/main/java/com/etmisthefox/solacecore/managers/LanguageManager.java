@@ -1,5 +1,6 @@
 package com.etmisthefox.solacecore.managers;
 
+import cz.foresttech.api.ColorAPI;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -54,7 +55,7 @@ public final class LanguageManager {
     }
 
     public String getMessage(String path) {
-        return langConfig.getString("messages." + path);
+        return /*ColorAPI.colorize("{#FF8C00>}&l[SolaceCore]{#FFFFFF<}&r") + " " + */langConfig.getString("messages." + path);
     }
 
     public String getMessage(String path, String... placeholders) {

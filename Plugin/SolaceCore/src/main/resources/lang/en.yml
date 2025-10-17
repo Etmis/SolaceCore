@@ -1,5 +1,4 @@
 messages:
-  no_reason: "No reason specified"
   usage:
     kick: "Usage: /kick <player> [reason]"
     ban: "Usage: /ban <player> [reason]"
@@ -8,7 +7,9 @@ messages:
     mute: "Usage: /mute <player> [reason]"
     tempmute: "Usage: /tempmute <player> <duration> [reason]"
     unmute: "Usage: /unmute <player>"
+    menu: "Usage: /menu <player>"
   punishment:
+    no_reason: "No reason specified"
     already_muted: "Player {player} is already muted."
     already_banned: "Player {player} is already banned."
     not_muted: "Player {player} isn't muted."
@@ -24,6 +25,16 @@ messages:
     warn_success: "Player {player} has been warned. Reason: {reason}"
     kick_protection: "Player {player} can't be kicked because they have kick protection"
     ban_protection: "Player {player} can't be banned because they have ban protection"
+  broadcast:
+    player_kicked: "{player} was kicked. Reason: {reason}"
+    player_banned: "{player} was banned. Reason: {reason}"
+    player_tempbanned: "{player} was temporarily banned for {time}. Reason: {reason}"
+    player_unbanned: "{player} was unbanned."
+    player_ipbanned: "{player} was IP-banned. Reason: {reason}"
+    player_muted: "{player} was muted. Reason: {reason}"
+    player_tempmuted: "{player} was temporarily muted for {time}. Reason: {reason}"
+    player_unmuted: "{player} was unmuted."
+    player_warned: "{player} was warned. Reason: {reason}"
   player_messages:
     kicked: "You have been kicked! Reason: {reason}"
     banned: "You have been permanently banned! Reason: {reason}. Banned by: {operator}"
@@ -37,6 +48,7 @@ messages:
     invalid_time: "Invalid time format. Use: 10m, 1h, 2d."
     no_permission: "You do not have permission to use this command."
     player_not_found: "Player is not online or does not exist."
+    not_banned: "Player {player} is not banned."
   chat:
     blocked_permanent_mute: "You cannot send messages because you are permanently muted."
     blocked_temp_mute: "You are temporarily muted. Reason: {reason}. Muted by: {operator}. Remaining time: {remaining}"

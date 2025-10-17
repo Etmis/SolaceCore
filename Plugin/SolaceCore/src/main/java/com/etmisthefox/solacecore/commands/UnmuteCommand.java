@@ -1,6 +1,7 @@
 package com.etmisthefox.solacecore.commands;
 
 import com.etmisthefox.solacecore.database.Database;
+import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import org.bukkit.Bukkit;
@@ -39,20 +40,22 @@ public final class UnmuteCommand implements CommandExecutor {
         String targetName = args[0];
 
         try {
+            List<Punishment> punishments = database.getActivePunishmentsByName(targetName);
 
-            List<Punishment> punishments = database.getPunishmentsByName(targetName);
+            if (punishments.isEmpty()) {
+                sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
+                return true;
+            }
 
             for (Punishment punishment : punishments) {
-                if (punishment.getIsActive()) {
-                    if (punishment.getPunishmentType().equals("mute")) {
-                        database.unpunishPlayer(targetName, "mute");
-                    } else if (punishment.getPunishmentType().equals("tempmute")) {
-                        database.unpunishPlayer(targetName, "tempmute");
-                    } else {
-                        sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
-                        continue;
-                    }
+                PunishmentType punishmentType = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
+                if (punishmentType == PunishmentType.MUTE || punishmentType == PunishmentType.TEMPMUTE) {
+                    database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
                     sender.sendMessage(lang.getMessage("punishment.unmute_success", "player", targetName));
+                }
+                else {
+                    sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
+                    return true;
                 }
             }
         } catch (SQLException e) {

@@ -1,6 +1,7 @@
 package com.etmisthefox.solacecore.commands;
 
 import com.etmisthefox.solacecore.database.Database;
+import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import org.bukkit.command.Command;
@@ -36,19 +37,22 @@ public final class UnbanCommand implements CommandExecutor {
         String targetName = args[0];
 
         try {
-            List<Punishment> punishments = database.getPunishmentsByName(targetName);
+            List<Punishment> punishments = database.getActivePunishmentsByName(targetName);
+
+            if (punishments.isEmpty()) {
+                sender.sendMessage(lang.getMessage("punishment.not_banned", "player", targetName));
+                return true;
+            }
 
             for (Punishment punishment : punishments) {
-                if (punishment.getIsActive()) {
-                    if (punishment.getPunishmentType().equals("ban")) {
-                        database.unpunishPlayer(targetName, "ban");
-                        sender.sendMessage(lang.getMessage("punishment.unban_success", "player", targetName));
-                    } else if (punishment.getPunishmentType().equals("tempban")) {
-                        database.unpunishPlayer(targetName, "tempban");
-                        sender.sendMessage(lang.getMessage("punishment.unban_success", "player", targetName));
-                    } else {
-                        sender.sendMessage(lang.getMessage("", "player", targetName));
-                    }
+                PunishmentType punishmentType = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
+                if (punishmentType == PunishmentType.BAN || punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.IPBAN) {
+                    database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
+                    sender.sendMessage(lang.getMessage("punishment.unban_success", "player", targetName));
+                }
+                else {
+                    sender.sendMessage(lang.getMessage("punishment.not_banned", "player", targetName));
+                    return true;
                 }
             }
         } catch (SQLException e) {

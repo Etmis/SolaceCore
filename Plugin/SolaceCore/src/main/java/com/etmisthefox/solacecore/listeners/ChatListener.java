@@ -33,7 +33,7 @@ public final class ChatListener implements Listener {
             return;
         }
         try {
-            List<Punishment> punishments = database.getPunishmentsByName(event.getPlayer().getName());
+            List<Punishment> punishments = database.getActivePunishmentsByName(event.getPlayer().getName());
             for (Punishment punishment : punishments) {
                 String type = punishment.getPunishmentType();
                 if ("mute".equals(type)) {

@@ -11,6 +11,7 @@ import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.ChatInputUtil;
 import com.etmisthefox.solacecore.utils.PunishmentUtil;
 import com.etmisthefox.solacecore.utils.TimeUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.Plugin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +33,11 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
     private static final Map<UUID, Long> DURATIONS = new ConcurrentHashMap<>(); // v sekundách
 
     private String getReasonOrDefault(Player player) {
-        return REASONS.getOrDefault(player.getUniqueId(), lang.getMessage("no_reason"));
+        String r = REASONS.get(player.getUniqueId());
+        if (r == null || r.isBlank()) {
+            return lang.getMessage("punishment.no_reason");
+        }
+        return r;
     }
 
     private Long getDuration(Player player) {
@@ -53,64 +59,69 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         // Fill Border -> Black Stained Glass Pane
         ItemStack blackStainedGlassPane = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta blackStainedGlassPaneMeta = blackStainedGlassPane.getItemMeta();
-        blackStainedGlassPaneMeta.setDisplayName(" ");
+        blackStainedGlassPaneMeta.displayName(Component.text(" "));
         blackStainedGlassPane.setItemMeta(blackStainedGlassPaneMeta);
         contents.fillBorders(ClickableItem.empty(blackStainedGlassPane));
 
         // Back -> Arrow
         ItemStack arrow = new ItemStack(Material.ARROW);
         ItemMeta arrowMeta = arrow.getItemMeta();
-        arrowMeta.setDisplayName("Back");
+        arrowMeta.displayName(Component.text("Back"));
         arrow.setItemMeta(arrowMeta);
-        contents.set(5, 0, ClickableItem.of(arrow, e -> MainMenu.getInventory(database, lang, inventoryManager, player).open(player)));
+        contents.set(5, 0, ClickableItem.of(arrow, e -> MainMenu.getInventory(database, lang, inventoryManager, target).open(player)));
 
         // Player's Head
         ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta playerHeadMeta = (SkullMeta) playerHead.getItemMeta();
-        playerHeadMeta.setDisplayName(target.getName());
+        playerHeadMeta.displayName(Component.text(target.getName()));
         playerHeadMeta.setOwningPlayer(target);
         playerHead.setItemMeta(playerHeadMeta);
         contents.set(1, 4, ClickableItem.empty(playerHead));
 
-        // Time -> Clock
-        ItemStack clock = new ItemStack(Material.CLOCK);
-        ItemMeta clockMeta = clock.getItemMeta();
-        clockMeta.setDisplayName("Punishment Time");
-        Long currentDuration = getDuration(player);
-        String formatted = currentDuration != null ? TimeUtil.formatDuration(currentDuration) : "(nenastaveno)";
-        clockMeta.setLore(List.of("Click to set punishment duration", "Aktuální: " + formatted));
-        clock.setItemMeta(clockMeta);
-        contents.set(2, 6, ClickableItem.of(clock, e -> {
-            player.closeInventory();
-            ChatInputUtil.requestInput(player, "Zadej délku trestu (např. 10m, 1h, 30s) nebo 'cancel'").thenAccept(input -> {
-                Plugin plugin = Bukkit.getPluginManager().getPlugin("SolaceCore");
-                if (plugin == null) return; // bezpečnost
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (input == null) {
-                        player.sendMessage("Operace zrušena.");
-                    } else {
-                        long seconds = TimeUtil.parseDuration(input);
-                        if (seconds <= 0) {
-                            player.sendMessage(lang.getMessage("errors.invalid_time"));
+        // Time -> Clock (only for TEMP actions)
+        if (punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.TEMPMUTE) {
+            ItemStack clock = new ItemStack(Material.CLOCK);
+            ItemMeta clockMeta = clock.getItemMeta();
+            clockMeta.displayName(Component.text("Punishment Time"));
+            Long currentDuration = getDuration(player);
+            String formatted = currentDuration != null ? TimeUtil.formatDuration(currentDuration) : "(nenastaveno)";
+            List<Component> clockLore = new ArrayList<>();
+            clockLore.add(Component.text("Click to set punishment duration"));
+            clockLore.add(Component.text("Aktuální: " + formatted));
+            clockMeta.lore(clockLore);
+            clock.setItemMeta(clockMeta);
+            contents.set(2, 6, ClickableItem.of(clock, e -> {
+                player.closeInventory();
+                ChatInputUtil.requestInput(player, "Zadej délku trestu (např. 10m, 1h, 30s) nebo 'cancel'").thenAccept(input -> {
+                    Plugin plugin = Bukkit.getPluginManager().getPlugin("SolaceCore");
+                    if (plugin == null) return; // bezpečnost
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (input == null) {
+                            player.sendMessage("Operace zrušena.");
                         } else {
-                            DURATIONS.put(player.getUniqueId(), seconds);
-                            player.sendMessage("Nastavená délka: " + TimeUtil.formatDuration(seconds));
+                            long seconds = TimeUtil.parseDuration(input);
+                            if (seconds <= 0) {
+                                player.sendMessage(lang.getMessage("errors.invalid_time"));
+                            } else {
+                                DURATIONS.put(player.getUniqueId(), seconds);
+                                player.sendMessage("Nastavená délka: " + TimeUtil.formatDuration(seconds));
+                            }
                         }
-                    }
-                    getInventory(database, lang, inventoryManager, target, punishmentType).open(player);
+                        getInventory(database, lang, inventoryManager, target, punishmentType).open(player);
+                    });
                 });
-            });
-        }));
+            }));
+        }
 
         // Book & Quill -> Reason
         ItemStack bookAndQuill = new ItemStack(Material.WRITABLE_BOOK);
         ItemMeta bookAndQuillMeta = bookAndQuill.getItemMeta();
-        bookAndQuillMeta.setDisplayName("Reason");
+        bookAndQuillMeta.displayName(Component.text("Reason"));
         String currentReason = getReasonOrDefault(player);
-        bookAndQuillMeta.setLore(List.of(
-                "Click to set punishment reason",
-                "Aktuální: " + currentReason
-        ));
+        List<Component> reasonLore = new ArrayList<>();
+        reasonLore.add(Component.text("Click to set punishment reason"));
+        reasonLore.add(Component.text("Aktuální: " + currentReason));
+        bookAndQuillMeta.lore(reasonLore);
         bookAndQuill.setItemMeta(bookAndQuillMeta);
         contents.set(2, 2, ClickableItem.of(bookAndQuill, e -> {
             player.closeInventory();
@@ -119,11 +130,13 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
                 if (plugin == null) return;
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (input == null) {
-                        player.sendMessage("Operace zrušena.");
+                        // cancel -> vyčistíme uložený důvod, následně se použije výchozí no_reason
+                        REASONS.remove(player.getUniqueId());
+                        player.sendMessage("Operace zrušena. Důvod ponechán: " + lang.getMessage("punishment.no_reason"));
                     } else {
                         String r = input.trim();
                         if (r.isEmpty()) {
-                            r = lang.getMessage("no_reason");
+                            r = lang.getMessage("punishment.no_reason");
                         }
                         REASONS.put(player.getUniqueId(), r);
                         player.sendMessage("Nastavený důvod: " + r);
@@ -136,7 +149,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         // Accept -> Green Wool
         ItemStack greenWool = new ItemStack(Material.GREEN_WOOL);
         ItemMeta greenWoolMeta = greenWool.getItemMeta();
-        greenWoolMeta.setDisplayName("Accept");
+        greenWoolMeta.displayName(Component.text("Accept"));
         greenWool.setItemMeta(greenWoolMeta);
         contents.set(5, 8, ClickableItem.of(greenWool, e -> {
             String reason = getReasonOrDefault(player);
