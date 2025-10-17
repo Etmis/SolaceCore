@@ -7,6 +7,7 @@ import com.etmisthefox.solacecore.models.Punishment;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -14,7 +15,6 @@ import java.util.List;
 public final class UnbanCommand implements CommandExecutor {
 
     private final Database database;
-
     private final LanguageManager lang;
 
     public UnbanCommand(Database database, LanguageManager lang) {
@@ -23,7 +23,7 @@ public final class UnbanCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!sender.hasPermission("solacecore.unban")) {
             sender.sendMessage(lang.getMessage("errors.no_permission"));
             return true;
@@ -58,7 +58,6 @@ public final class UnbanCommand implements CommandExecutor {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return true;
     }
 }

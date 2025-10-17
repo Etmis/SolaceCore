@@ -7,23 +7,25 @@ import com.etmisthefox.solacecore.listeners.ChatListener;
 import com.etmisthefox.solacecore.listeners.ConnectionListener;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.ChatInputUtil;
+import com.etmisthefox.solacecore.utils.DisconnectScreenUtil;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
 
 public final class SolaceCore extends JavaPlugin {
 
-    private LanguageManager lang;
     private Database database;
-    private InventoryManager inventoryManager;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        inventoryManager = new InventoryManager(this);
+        InventoryManager inventoryManager = new InventoryManager(this);
         inventoryManager.init();
 
-        lang = new LanguageManager(this, getConfig().getString("language", "en"));
+        DisconnectScreenUtil.setFc(getConfig());
+
+        LanguageManager lang = new LanguageManager(this, getConfig().getString("language", "en"));
 
         database = new Database(this);
         try {
@@ -31,25 +33,36 @@ public final class SolaceCore extends JavaPlugin {
         } catch (SQLException e) {
             e.printStackTrace();
             getLogger().severe("Database error...");
+            getServer().shutdown();
         }
 
-        getCommand("kick").setExecutor(new KickCommand(database, lang));
-        getCommand("ban").setExecutor(new BanCommand(database, lang));
-        getCommand("ipban").setExecutor(new IpbanCommand(database, lang));
-        getCommand("tempban").setExecutor(new TempbanCommand(database, lang));
-        getCommand("unban").setExecutor(new UnbanCommand(database, lang));
-        getCommand("mute").setExecutor(new MuteCommand(database, lang));
-        getCommand("tempmute").setExecutor(new TempmuteCommand(database, lang));
-        getCommand("unmute").setExecutor(new UnmuteCommand(database, lang));
-        getCommand("menu").setExecutor(new MenuCommand(database, lang, inventoryManager));
+        registerCommand("kick", new KickCommand(database, lang));
+        registerCommand("ban", new BanCommand(database, lang));
+        registerCommand("ipban", new IpbanCommand(database, lang));
+        registerCommand("tempban", new TempbanCommand(database, lang));
+        registerCommand("unban", new UnbanCommand(database, lang));
+        registerCommand("mute", new MuteCommand(database, lang));
+        registerCommand("warn", new WarnCommand(database, lang));
+        registerCommand("tempmute", new TempmuteCommand(database, lang));
+        registerCommand("unmute", new UnmuteCommand(database, lang));
+        registerCommand("menu", new MenuCommand(database, lang, this, inventoryManager));
 
         getServer().getPluginManager().registerEvents(new ConnectionListener(database, lang), this);
         getServer().getPluginManager().registerEvents(new ChatListener(database, lang), this);
     }
 
+    private void registerCommand(String name, CommandExecutor executor) {
+        var command = getCommand(name);
+        if (command == null) {
+            getLogger().severe("Command '" + name + "' not found in plugin.yml!");
+            return;
+        }
+        command.setExecutor(executor);
+    }
+
+
     @Override
     public void onDisable() {
-        // Zrušení případných čekajících chat inputů
         ChatInputUtil.cancelAll();
         if (database != null) {
             database.closeConnection();

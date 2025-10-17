@@ -2,8 +2,9 @@ package com.etmisthefox.solacecore.enums;
 
 public enum PunishmentType {
     BAN,
-    TEMPBAN,
     IPBAN,
+    TEMPBAN,
+    TEMPIPBAN,
     MUTE,
     TEMPMUTE,
     KICK,

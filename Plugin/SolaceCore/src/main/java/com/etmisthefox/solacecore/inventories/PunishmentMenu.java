@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public record PunishmentMenu(Database database, LanguageManager lang, InventoryManager inventoryManager, Player target, PunishmentType punishmentType) implements InventoryProvider {
+public record PunishmentMenu(Database database, LanguageManager lang, Plugin plugin, InventoryManager inventoryManager, Player target, PunishmentType punishmentType) implements InventoryProvider {
 
     // Mapa pro uložení důvodu per hráč, který zadává trest (operátor), nikoli per cíl.
     private static final Map<UUID, String> REASONS = new ConcurrentHashMap<>();
@@ -44,10 +44,10 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         return DURATIONS.get(player.getUniqueId());
     }
 
-    public static SmartInventory getInventory(Database database, LanguageManager lang, InventoryManager inventoryManager, Player target, PunishmentType punishmentType) {
+    public static SmartInventory getInventory(Database database, LanguageManager lang, Plugin plugin, InventoryManager inventoryManager, Player target, PunishmentType punishmentType) {
         return SmartInventory.builder()
                 .id("punishmentMenu")
-                .provider(new PunishmentMenu(database, lang, inventoryManager, target, punishmentType))
+                .provider(new PunishmentMenu(database, lang, plugin, inventoryManager, target, punishmentType))
                 .size(6, 9)
                 .title(lang.getMessage("gui.punishment_menu.title"))
                 .manager(inventoryManager)
@@ -68,7 +68,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         ItemMeta arrowMeta = arrow.getItemMeta();
         arrowMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.back")));
         arrow.setItemMeta(arrowMeta);
-        contents.set(5, 0, ClickableItem.of(arrow, e -> MainMenu.getInventory(database, lang, inventoryManager, target).open(player)));
+        contents.set(5, 0, ClickableItem.of(arrow, e -> MainMenu.getInventory(database, lang, plugin, inventoryManager, target).open(player)));
 
         // Player's Head
         ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD);
@@ -107,7 +107,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
                                 player.sendMessage(lang.getMessage("prompt.duration_set", "duration", TimeUtil.formatDuration(seconds)));
                             }
                         }
-                        getInventory(database, lang, inventoryManager, target, punishmentType).open(player);
+                        getInventory(database, lang, plugin, inventoryManager, target, punishmentType).open(player);
                     });
                 });
             }));
@@ -141,7 +141,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
                         REASONS.put(player.getUniqueId(), r);
                         player.sendMessage(lang.getMessage("prompt.reason_set", "reason", r));
                     }
-                    getInventory(database, lang, inventoryManager, target, punishmentType).open(player);
+                    getInventory(database, lang, plugin, inventoryManager, target, punishmentType).open(player);
                 });
             });
         }));

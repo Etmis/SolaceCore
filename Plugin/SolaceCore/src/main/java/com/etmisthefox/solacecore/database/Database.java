@@ -2,20 +2,23 @@ package com.etmisthefox.solacecore.database;
 
 import com.etmisthefox.solacecore.SolaceCore;
 import com.etmisthefox.solacecore.models.Punishment;
+import org.bukkit.configuration.file.FileConfiguration;
 
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public final class Database {
 
     private final SolaceCore plugin;
-
     private Connection connection;
+    private final Logger log;
 
     public Database(SolaceCore plugin) {
         this.plugin = plugin;
+        this.log = plugin.getLogger();
     }
 
     public Connection getConnection() throws SQLException {
@@ -24,13 +27,14 @@ public final class Database {
             return connection;
         }
 
-        String url = "jdbc:mysql://" + this.plugin.getConfig().getString("database.ip_address") + "/" + this.plugin.getConfig().getString("database.database_name");
-        String user = this.plugin.getConfig().getString("database.user");
-        String password = this.plugin.getConfig().getString("database.password");
+        FileConfiguration fc = plugin.getConfig();
 
-        this.connection = DriverManager.getConnection(url, user, password);
-        plugin.getLogger().info("Connected to the database.");
-        return this.connection;
+        String url = "jdbc:mysql://" + fc.getString("database.ip_address") + "/" + fc.getString("database.database_name");
+        String user = fc.getString("database.user");
+        String password = fc.getString("database.password");
+        connection = DriverManager.getConnection(url, user, password);
+        log.info("Connected to the database.");
+        return connection;
     }
 
     public void initializeDatabase() throws SQLException {
@@ -48,7 +52,7 @@ public final class Database {
                     );
                     """;
             playersTableStatement.execute(playersTableSQL);
-            plugin.getLogger().info("Players table successfully created.");
+            log.info("Players table successfully created.");
         }
 
         // Tabulka punishments
@@ -70,7 +74,7 @@ public final class Database {
                     );
                     """;
             punishmentsTableStatement.execute(punishmentsTableSQL);
-            plugin.getLogger().info("Punishments table successfully created (FK player_name -> players.name).");
+            log.info("Punishments table successfully created (FK player_name -> players.name).");
         }
 
         // Tabulka operators
@@ -83,7 +87,7 @@ public final class Database {
                     );
                     """;
             operatorsTableStatement.execute(operatorsTableSQL);
-            plugin.getLogger().info("Operators table successfully created.");
+            log.info("Operators table successfully created.");
         }
     }
 
@@ -159,9 +163,9 @@ public final class Database {
         if (this.connection != null) {
             try {
                 this.connection.close();
-                plugin.getLogger().info("Database connection closed.");
+                log.info("Database connection closed.");
             } catch (SQLException e) {
-                plugin.getLogger().severe("Failed to close database connection: " + e.getMessage());
+                log.severe("Failed to close database connection: " + e.getMessage());
             }
         }
     }

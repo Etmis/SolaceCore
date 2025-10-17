@@ -9,22 +9,21 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
-public final class BanCommand implements CommandExecutor {
+public final class WarnCommand implements CommandExecutor {
 
     private final Database database;
     private final LanguageManager lang;
 
-    public BanCommand(Database database, LanguageManager lang) {
+    public WarnCommand(Database database, LanguageManager lang) {
         this.database = database;
         this.lang = lang;
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage(lang.getMessage("usage.ban"));
+            sender.sendMessage(lang.getMessage("usage.warn"));
             return true;
         }
 
@@ -35,8 +34,7 @@ public final class BanCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, (Player) sender, (Player) Bukkit.getOfflinePlayer(args[0]), reason, null);
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, (Player) sender, Bukkit.getPlayer(args[0]), reason, null);
         return true;
     }
 }
-

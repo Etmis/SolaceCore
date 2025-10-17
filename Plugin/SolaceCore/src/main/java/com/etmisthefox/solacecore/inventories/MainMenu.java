@@ -12,6 +12,7 @@ import com.etmisthefox.solacecore.models.Punishment;
 import com.etmisthefox.solacecore.utils.TimeUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -22,12 +23,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public record MainMenu(Database database, LanguageManager lang, InventoryManager inventoryManager, Player target) implements InventoryProvider {
+public record MainMenu(Database database, LanguageManager lang, Plugin plugin, InventoryManager inventoryManager, Player target) implements InventoryProvider {
 
-    public static SmartInventory getInventory(Database database, LanguageManager lang, InventoryManager inventoryManager, Player target) {
+    public static SmartInventory getInventory(Database database, LanguageManager lang, Plugin plugin, InventoryManager inventoryManager, Player target) {
         return SmartInventory.builder()
                 .id("mainMenu")
-                .provider(new MainMenu(database, lang, inventoryManager, target))
+                .provider(new MainMenu(database, lang, plugin, inventoryManager, target))
                 .size(6, 9)
                 .title(lang.getMessage("gui.main_menu.title"))
                 .manager(inventoryManager)
@@ -113,48 +114,48 @@ public record MainMenu(Database database, LanguageManager lang, InventoryManager
         ItemMeta kickMeta = kickItem.getItemMeta();
         kickMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.kick"), NamedTextColor.WHITE));
         kickItem.setItemMeta(kickMeta);
-        contents.set(2, 2, ClickableItem.of(kickItem, e -> PunishmentMenu.getInventory(database, lang, inventoryManager, target, PunishmentType.KICK).open(player)));
+        contents.set(2, 2, ClickableItem.of(kickItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.KICK).open(player)));
 
         // Ban -> Red Concrete
         ItemStack banItem = new ItemStack(Material.RED_CONCRETE);
         ItemMeta banMeta = banItem.getItemMeta();
         banMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.ban"), NamedTextColor.RED));
         banItem.setItemMeta(banMeta);
-        contents.set(2, 3, ClickableItem.of(banItem, e -> PunishmentMenu.getInventory(database, lang, inventoryManager, target, PunishmentType.BAN).open(player)));
+        contents.set(2, 3, ClickableItem.of(banItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.BAN).open(player)));
 
         // Tempban -> Orange Concrete
         ItemStack tempbanItem = new ItemStack(Material.ORANGE_CONCRETE);
         ItemMeta tempbanMeta = tempbanItem.getItemMeta();
         tempbanMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.tempban"), NamedTextColor.GOLD));
         tempbanItem.setItemMeta(tempbanMeta);
-        contents.set(2, 4, ClickableItem.of(tempbanItem, e -> PunishmentMenu.getInventory(database, lang, inventoryManager, target, PunishmentType.TEMPBAN).open(player)));
+        contents.set(2, 4, ClickableItem.of(tempbanItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.TEMPBAN).open(player)));
 
         // IP Ban -> Black Concrete
         ItemStack ipbanItem = new ItemStack(Material.BLACK_CONCRETE);
         ItemMeta ipbanMeta = ipbanItem.getItemMeta();
         ipbanMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.ipban"), NamedTextColor.DARK_GRAY));
         ipbanItem.setItemMeta(ipbanMeta);
-        contents.set(2, 5, ClickableItem.of(ipbanItem, e -> PunishmentMenu.getInventory(database, lang, inventoryManager, target, PunishmentType.IPBAN).open(player)));
+        contents.set(2, 5, ClickableItem.of(ipbanItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.IPBAN).open(player)));
 
         // Mute -> Gray Concrete
         ItemStack muteItem = new ItemStack(Material.GRAY_CONCRETE);
         ItemMeta muteMeta = muteItem.getItemMeta();
         muteMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.mute"), NamedTextColor.GRAY));
         muteItem.setItemMeta(muteMeta);
-        contents.set(3, 2, ClickableItem.of(muteItem, e -> PunishmentMenu.getInventory(database, lang, inventoryManager, target, PunishmentType.MUTE).open(player)));
+        contents.set(3, 2, ClickableItem.of(muteItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.MUTE).open(player)));
 
         // Tempmute -> Light Gray Concrete
         ItemStack tempmuteItem = new ItemStack(Material.LIGHT_GRAY_CONCRETE);
         ItemMeta tempmuteMeta = tempmuteItem.getItemMeta();
         tempmuteMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.tempmute"), NamedTextColor.GRAY));
         tempmuteItem.setItemMeta(tempmuteMeta);
-        contents.set(3, 3, ClickableItem.of(tempmuteItem, e -> PunishmentMenu.getInventory(database, lang, inventoryManager, target, PunishmentType.TEMPMUTE).open(player)));
+        contents.set(3, 3, ClickableItem.of(tempmuteItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.TEMPMUTE).open(player)));
 
         // Warn -> Yellow Concrete
         ItemStack warnItem = new ItemStack(Material.YELLOW_CONCRETE);
         ItemMeta warnMeta = warnItem.getItemMeta();
         warnMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.warn"), NamedTextColor.YELLOW));
         warnItem.setItemMeta(warnMeta);
-        contents.set(3, 4, ClickableItem.of(warnItem, e -> PunishmentMenu.getInventory(database, lang, inventoryManager, target, PunishmentType.WARN).open(player)));
+        contents.set(3, 4, ClickableItem.of(warnItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.WARN).open(player)));
     }
 }

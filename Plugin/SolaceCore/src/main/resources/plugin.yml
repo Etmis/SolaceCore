@@ -7,37 +7,45 @@ description: skibidi plugin
 website: https://etmisthefox.com
 commands:
   kick:
-    description: Vykopne hráče ze serveru
+    description: Kicks a player from the server
     usage: /kick <player> [reason]
     permission: solacecore.kick
   ban:
-    description: Zabanovat hráče
+    description: Ban a player
     usage: /ban <player> [reason]
     permission: solacecore.ban
   ipban:
-    description: IP Ban hráče
+    description: IP-ban a player
     usage: /ipban <player> [reason]
     permission: solacecore.ipban
-  unban:
-    description: Odbanovat hráče
-    usage: /unban <player>
-    permission: solacecore.unban
   tempban:
-    description: Temp Ban hráče
+    description: Temporarily ban a player
     usage: /tempban <player> <time> [reason]
     permission: solacecore.tempban
+  tempipban:
+    description: Temporarily IP-ban a player
+    usage: /tempipban <player> <time> [reason]
+    permission: solacecore.tempban
+  unban:
+    description: Unban a player
+    usage: /unban <player>
+    permission: solacecore.unban
   mute:
-    description: Mute hráče
+    description: Mute a player
     usage: /mute <player> [reason]
     permission: solacecore.mute
   tempmute:
-    description: Tempmute hráče
+    description: Temporarily mute a player
     usage: /tempmute <player> <time> [reason]
     permission: solacecore.tempmute
   unmute:
-    description: Unmute hráče
+    description: Unmute a player
     usage: /unmute <player>
     permission: solacecore.unmute
+  warn:
+    description: Warn a player
+    usage: /warn <player> [reason]
+    permission: solacecore.warn
   menu:
     description: Main menu
     usage: /menu <player>
@@ -50,6 +58,8 @@ permissions:
   solacecore.ipban:
     default: op
   solacecore.tempban:
+    default: op
+  solacecore.tempipban:
     default: op
   solacecore.unban:
     default: op

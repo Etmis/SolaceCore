@@ -1,6 +1,5 @@
 package com.etmisthefox.solacecore.managers;
 
-import cz.foresttech.api.ColorAPI;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -21,15 +20,13 @@ public final class LanguageManager {
         this.plugin = plugin;
         this.langFolder = new File(plugin.getDataFolder(), "languages");
 
-        // Vytvoří složku languages pokud neexistuje
         if (!langFolder.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             langFolder.mkdirs();
         }
 
-        // Zkopíruje výchozí en.yml ze složky resources/lang do plugins/SolaceCore/languages/
         copyDefaultLanguages("en.yml");
 
-        // Načte vybraný jazyk
         File langFile = new File(langFolder, language + ".yml");
         langConfig = YamlConfiguration.loadConfiguration(langFile);
     }

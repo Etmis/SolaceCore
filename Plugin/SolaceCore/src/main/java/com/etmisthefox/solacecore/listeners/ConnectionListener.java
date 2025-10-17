@@ -1,8 +1,10 @@
 package com.etmisthefox.solacecore.listeners;
 
 import com.etmisthefox.solacecore.database.Database;
+import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.models.Punishment;
+import com.etmisthefox.solacecore.utils.DisconnectScreenUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -10,8 +12,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 
 import java.sql.SQLException;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.etmisthefox.solacecore.utils.TimeUtil.formatDuration;
@@ -33,34 +33,28 @@ public final class ConnectionListener implements Listener {
             List<Punishment> punishments = database.getActivePunishmentsByName(event.getName());
             List<Punishment> ipPunishments = database.getActivePunishmentsByIp(event.getAddress().getHostAddress());
             for (Punishment punishment : punishments) {
-                String type = punishment.getPunishmentType();
-                if ("ban".equals(type) || "ipban".equals(type)) {
-                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                            Component.text(lang.getMessage("login.banned_permanent",
-                                    "reason", punishment.getReason(),
-                                    "operator", punishment.getOperator()))
+                PunishmentType type = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
+                switch (type) {
+                    case PunishmentType.BAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
+                            DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.ban"),
+                                    punishment.getReason(),
+                                    punishment.getOperator(),
+                                    null)
                     );
-                } else if ("tempban".equals(type)) {
-                    if (punishment.getStart().plusSeconds(punishment.getDuration()).isBefore(LocalDateTime.now())) {
-                        database.unpunishPlayer(event.getName(), "tempban");
-                    } else {
-                        long remainingSeconds = Duration.between(LocalDateTime.now(), punishment.getStart().plusSeconds(punishment.getDuration())).getSeconds();
-                        String remaining = formatDuration(remainingSeconds);
-                        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                                Component.text(lang.getMessage("login.banned_temp",
-                                        "reason", punishment.getReason(),
-                                        "operator", punishment.getOperator(),
-                                        "remaining", remaining))
-                        );
-                    }
+                    case PunishmentType.TEMPBAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
+                            DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.tempban"),
+                                    punishment.getReason(),
+                                    punishment.getOperator(),
+                                    formatDuration(punishment.getDuration()))
+                    );
                 }
             }
             for (Punishment ipPunishment : ipPunishments) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                     Component.text(lang.getMessage("login.banned_permanent",
-                             "reason", ipPunishment.getReason(),
-                             "operator", ipPunishment.getOperator()))
-                );
+                        DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.ipban"),
+                                ipPunishment.getReason(),
+                                ipPunishment.getOperator(),
+                                null));
             }
         } catch (SQLException e) {
             e.printStackTrace();

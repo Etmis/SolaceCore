@@ -4,10 +4,10 @@ import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import com.etmisthefox.solacecore.utils.ChatInputUtil;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.sql.SQLException;
 import java.time.Duration;
@@ -27,7 +27,7 @@ public final class ChatListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onChat(AsyncPlayerChatEvent event) {
+    public void onChat(AsyncChatEvent event) {
         // Pokud hráč právě poskytuje vstup přes ChatInputUtil, zpracujeme a ukončíme.
         if (ChatInputUtil.handleChatInput(event)) {
             return;

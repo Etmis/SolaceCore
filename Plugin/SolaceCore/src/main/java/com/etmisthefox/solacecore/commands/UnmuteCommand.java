@@ -4,11 +4,10 @@ import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.models.Punishment;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.List;
 public final class UnmuteCommand implements CommandExecutor {
 
     private final Database database;
-
     private final LanguageManager lang;
 
     public UnmuteCommand(Database database, LanguageManager lang) {
@@ -25,7 +23,7 @@ public final class UnmuteCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
 
         if (!sender.hasPermission("solacecore.unmute")) {
             sender.sendMessage(lang.getMessage("errors.no_permission"));
@@ -61,7 +59,6 @@ public final class UnmuteCommand implements CommandExecutor {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return true;
     }
 }

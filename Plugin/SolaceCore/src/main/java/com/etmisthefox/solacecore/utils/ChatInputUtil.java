@@ -1,7 +1,7 @@
 package com.etmisthefox.solacecore.utils;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -46,12 +46,12 @@ public final class ChatInputUtil {
     /**
      * Zpracuje chat event pokud hráč čeká na vstup. True = spotřebováno (zrušit broadcast).
      */
-    public static boolean handleChatInput(AsyncPlayerChatEvent event) {
+    public static boolean handleChatInput(AsyncChatEvent event) {
         Player player = event.getPlayer();
         PendingInput pending = PENDING.get(player.getUniqueId());
         if (pending == null) return false;
 
-        String msg = event.getMessage();
+        String msg = event.message().toString();
         event.setCancelled(true); // Nechceme broadcastovat do veřejného chatu
         if (msg.equalsIgnoreCase(CANCEL_KEYWORD)) {
             // Zrušení bez posílání zprávy – to řeší volající podle vlastní lokalizace

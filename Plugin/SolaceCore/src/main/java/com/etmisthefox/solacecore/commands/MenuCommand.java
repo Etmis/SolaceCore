@@ -9,21 +9,25 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
 public final class MenuCommand implements CommandExecutor {
 
     private final Database database;
     private final LanguageManager lang;
+    private final Plugin plugin;
     private final InventoryManager inventoryManager;
 
-    public MenuCommand(Database database, LanguageManager lang, InventoryManager inventoryManager) {
+    public MenuCommand(Database database, LanguageManager lang, Plugin plugin, InventoryManager inventoryManager) {
         this.database = database;
         this.lang = lang;
+        this.plugin = plugin;
         this.inventoryManager = inventoryManager;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(lang.getMessage("errors.only_players"));
             return true;
@@ -41,8 +45,7 @@ public final class MenuCommand implements CommandExecutor {
             return true;
         }
 
-        MainMenu.getInventory(database, lang, inventoryManager, target).open(player);
-
+        MainMenu.getInventory(database, lang, plugin, inventoryManager, target).open(player);
         return true;
     }
 }
