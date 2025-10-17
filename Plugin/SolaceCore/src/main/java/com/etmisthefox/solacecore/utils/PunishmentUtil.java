@@ -141,19 +141,9 @@ public final class PunishmentUtil {
                     e.printStackTrace();
                 }
                 // Zpráva hráči
-                String playerMsg = lang.getMessage("player_messages.warned");
-                if (playerMsg == null) {
-                    target.sendMessage("Byl jsi varován! Důvod: " + reason);
-                } else {
-                    target.sendMessage(lang.getMessage("player_messages.warned", "reason", reason, "operator", sender.getName()));
-                }
+                target.sendMessage(lang.getMessage("player_messages.warned", "reason", reason, "operator", sender.getName()));
                 // Broadcast
-                String broadcast = lang.getMessage("punishment.warn_success");
-                if (broadcast == null) {
-                    Bukkit.broadcast(Component.text("Hráč " + targetName + " byl varován. Důvod: " + reason));
-                } else {
-                    Bukkit.broadcast(Component.text(lang.getMessage("punishment.warn_success", "player", targetName, "reason", reason)));
-                }
+                Bukkit.broadcast(Component.text(lang.getMessage("punishment.warn_success", "player", targetName, "reason", reason)));
             }
         }
     }

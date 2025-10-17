@@ -49,7 +49,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
                 .id("punishmentMenu")
                 .provider(new PunishmentMenu(database, lang, inventoryManager, target, punishmentType))
                 .size(6, 9)
-                .title("Punishment Menu")
+                .title(lang.getMessage("gui.punishment_menu.title"))
                 .manager(inventoryManager)
                 .build();
     }
@@ -66,7 +66,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         // Back -> Arrow
         ItemStack arrow = new ItemStack(Material.ARROW);
         ItemMeta arrowMeta = arrow.getItemMeta();
-        arrowMeta.displayName(Component.text("Back"));
+        arrowMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.back")));
         arrow.setItemMeta(arrowMeta);
         contents.set(5, 0, ClickableItem.of(arrow, e -> MainMenu.getInventory(database, lang, inventoryManager, target).open(player)));
 
@@ -82,29 +82,29 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         if (punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.TEMPMUTE) {
             ItemStack clock = new ItemStack(Material.CLOCK);
             ItemMeta clockMeta = clock.getItemMeta();
-            clockMeta.displayName(Component.text("Punishment Time"));
+            clockMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.time_title")));
             Long currentDuration = getDuration(player);
-            String formatted = currentDuration != null ? TimeUtil.formatDuration(currentDuration) : "(nenastaveno)";
+            String formatted = currentDuration != null ? TimeUtil.formatDuration(currentDuration) : lang.getMessage("gui.common.not_set");
             List<Component> clockLore = new ArrayList<>();
-            clockLore.add(Component.text("Click to set punishment duration"));
-            clockLore.add(Component.text("Aktuální: " + formatted));
+            clockLore.add(Component.text(lang.getMessage("gui.punishment_menu.time_lore_line1")));
+            clockLore.add(Component.text(lang.getMessage("gui.punishment_menu.time_current", "value", formatted)));
             clockMeta.lore(clockLore);
             clock.setItemMeta(clockMeta);
             contents.set(2, 6, ClickableItem.of(clock, e -> {
                 player.closeInventory();
-                ChatInputUtil.requestInput(player, "Zadej délku trestu (např. 10m, 1h, 30s) nebo 'cancel'").thenAccept(input -> {
+                ChatInputUtil.requestInput(player, lang.getMessage("prompt.enter_duration")).thenAccept(input -> {
                     Plugin plugin = Bukkit.getPluginManager().getPlugin("SolaceCore");
                     if (plugin == null) return; // bezpečnost
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         if (input == null) {
-                            player.sendMessage("Operace zrušena.");
+                            player.sendMessage(lang.getMessage("prompt.cancelled_simple"));
                         } else {
                             long seconds = TimeUtil.parseDuration(input);
                             if (seconds <= 0) {
                                 player.sendMessage(lang.getMessage("errors.invalid_time"));
                             } else {
                                 DURATIONS.put(player.getUniqueId(), seconds);
-                                player.sendMessage("Nastavená délka: " + TimeUtil.formatDuration(seconds));
+                                player.sendMessage(lang.getMessage("prompt.duration_set", "duration", TimeUtil.formatDuration(seconds)));
                             }
                         }
                         getInventory(database, lang, inventoryManager, target, punishmentType).open(player);
@@ -116,30 +116,30 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         // Book & Quill -> Reason
         ItemStack bookAndQuill = new ItemStack(Material.WRITABLE_BOOK);
         ItemMeta bookAndQuillMeta = bookAndQuill.getItemMeta();
-        bookAndQuillMeta.displayName(Component.text("Reason"));
+        bookAndQuillMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.reason_title")));
         String currentReason = getReasonOrDefault(player);
         List<Component> reasonLore = new ArrayList<>();
-        reasonLore.add(Component.text("Click to set punishment reason"));
-        reasonLore.add(Component.text("Aktuální: " + currentReason));
+        reasonLore.add(Component.text(lang.getMessage("gui.punishment_menu.reason_lore_line1")));
+        reasonLore.add(Component.text(lang.getMessage("gui.punishment_menu.reason_current", "value", currentReason)));
         bookAndQuillMeta.lore(reasonLore);
         bookAndQuill.setItemMeta(bookAndQuillMeta);
         contents.set(2, 2, ClickableItem.of(bookAndQuill, e -> {
             player.closeInventory();
-            ChatInputUtil.requestInput(player, "Zadej důvod trestu nebo 'cancel'").thenAccept(input -> {
+            ChatInputUtil.requestInput(player, lang.getMessage("prompt.enter_reason")).thenAccept(input -> {
                 Plugin plugin = Bukkit.getPluginManager().getPlugin("SolaceCore");
                 if (plugin == null) return;
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (input == null) {
                         // cancel -> vyčistíme uložený důvod, následně se použije výchozí no_reason
                         REASONS.remove(player.getUniqueId());
-                        player.sendMessage("Operace zrušena. Důvod ponechán: " + lang.getMessage("punishment.no_reason"));
+                        player.sendMessage(lang.getMessage("prompt.cancelled_keep_reason", "reason", lang.getMessage("punishment.no_reason")));
                     } else {
                         String r = input.trim();
                         if (r.isEmpty()) {
                             r = lang.getMessage("punishment.no_reason");
                         }
                         REASONS.put(player.getUniqueId(), r);
-                        player.sendMessage("Nastavený důvod: " + r);
+                        player.sendMessage(lang.getMessage("prompt.reason_set", "reason", r));
                     }
                     getInventory(database, lang, inventoryManager, target, punishmentType).open(player);
                 });
@@ -149,7 +149,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, InventoryM
         // Accept -> Green Wool
         ItemStack greenWool = new ItemStack(Material.GREEN_WOOL);
         ItemMeta greenWoolMeta = greenWool.getItemMeta();
-        greenWoolMeta.displayName(Component.text("Accept"));
+        greenWoolMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.accept")));
         greenWool.setItemMeta(greenWoolMeta);
         contents.set(5, 8, ClickableItem.of(greenWool, e -> {
             String reason = getReasonOrDefault(player);

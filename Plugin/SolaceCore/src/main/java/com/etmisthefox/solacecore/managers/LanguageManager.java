@@ -26,8 +26,8 @@ public final class LanguageManager {
             langFolder.mkdirs();
         }
 
-        // Zkopíruje všechny jazyky ze složky resources/lang do plugins/Xban/languages/
-        copyDefaultLanguages("cs.yml", "en.yml");
+        // Zkopíruje výchozí en.yml ze složky resources/lang do plugins/SolaceCore/languages/
+        copyDefaultLanguages("en.yml");
 
         // Načte vybraný jazyk
         File langFile = new File(langFolder, language + ".yml");

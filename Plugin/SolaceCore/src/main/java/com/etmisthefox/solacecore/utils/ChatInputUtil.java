@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Utility pro zachycení jednorázového textového vstupu hráče přes chat.
  * Použití:
- * ChatInputUtil.requestInput(player, "Zadej důvod nebo napiš cancel:").thenAccept(result -> { ... });
+ * ChatInputUtil.requestInput(player, "<prompt>").thenAccept(result -> { ... });
  * Pokud hráč napíše "cancel" (case-insensitive), vrací se null.
  */
 public final class ChatInputUtil {
@@ -38,7 +38,8 @@ public final class ChatInputUtil {
             // Předchozí nedokončený input zrušíme
             old.future.complete(null);
         }
-        player.sendMessage(prompt + " (napiš '" + CANCEL_KEYWORD + "' pro zrušení)");
+        // Volající musí dodat celý prompt (včetně případného textu o cancel)
+        player.sendMessage(prompt);
         return future;
     }
 
@@ -53,7 +54,7 @@ public final class ChatInputUtil {
         String msg = event.getMessage();
         event.setCancelled(true); // Nechceme broadcastovat do veřejného chatu
         if (msg.equalsIgnoreCase(CANCEL_KEYWORD)) {
-            player.sendMessage("Vstup zrušen.");
+            // Zrušení bez posílání zprávy – to řeší volající podle vlastní lokalizace
             pending.future.complete(null);
         } else {
             pending.future.complete(msg);
