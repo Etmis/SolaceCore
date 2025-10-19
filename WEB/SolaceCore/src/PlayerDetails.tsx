@@ -227,7 +227,7 @@ function renderStatusChip(entry: PunishmentDetail) {
 
 function getStatusInfo(entry: PunishmentDetail) {
   const type = (entry.type || '').toLowerCase()
-  if (type.includes('kick') || type.includes('warn')) {
+  if (type.includes('kick')) {
     return { label: 'Resolved', className: 'status-expired' }
   }
   if (entry.isActive) {

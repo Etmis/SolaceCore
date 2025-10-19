@@ -7,8 +7,7 @@ import org.bukkit.plugin.Plugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public final class LanguageManager {
 
@@ -35,7 +34,7 @@ public final class LanguageManager {
         for (String lang : languages) {
             File targetFile = new File(langFolder, lang);
             if (!targetFile.exists()) {
-                saveResource("lang/" + lang, targetFile);
+                saveResource("languages/" + lang, targetFile);
             }
         }
     }
@@ -43,8 +42,7 @@ public final class LanguageManager {
     private void saveResource(String resourcePath, File outputFile) {
         try (InputStream stream = plugin.getResource(resourcePath)) {
             if (stream != null) {
-                FileConfiguration config = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
-                config.save(outputFile);
+                Files.copy(stream, outputFile.toPath());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -52,7 +50,7 @@ public final class LanguageManager {
     }
 
     public String getMessage(String path) {
-        return /*ColorAPI.colorize("{#FF8C00>}&l[SolaceCore]{#FFFFFF<}&r") + " " + */langConfig.getString("messages." + path);
+        return /*ColorAPI.colorize("{#FF8C00>}&l[SolaceCore]{#FFFFFF<}&r") + " " + */langConfig.getString(path);
     }
 
     public String getMessage(String path, String... placeholders) {

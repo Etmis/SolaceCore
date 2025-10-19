@@ -40,6 +40,8 @@ public final class MenuCommand implements CommandExecutor {
 
         Player target = Bukkit.getPlayer(args[0]);
 
+        // TODO: Support offline players
+
         if (!player.hasPermission("solacecore.menu")) {
             player.sendMessage(lang.getMessage("errors.no_permission"));
             return true;

@@ -2,6 +2,7 @@ package com.etmisthefox.solacecore.utils;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.entity.Player;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import java.util.Map;
 import java.util.UUID;
@@ -51,7 +52,8 @@ public final class ChatInputUtil {
         PendingInput pending = PENDING.get(player.getUniqueId());
         if (pending == null) return false;
 
-        String msg = event.message().toString();
+        // Převeď zprávu z Adventure Component na obyčejný text a ořízni whitespace
+        String msg = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
         event.setCancelled(true); // Nechceme broadcastovat do veřejného chatu
         if (msg.equalsIgnoreCase(CANCEL_KEYWORD)) {
             // Zrušení bez posílání zprávy – to řeší volající podle vlastní lokalizace

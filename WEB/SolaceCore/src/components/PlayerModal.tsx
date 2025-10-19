@@ -31,12 +31,7 @@ export default function PlayerModal({
   }, [player.uuid])
 
   const activeItems = useMemo(() => (items || []).filter(p => p.isActive !== false), [items])
-
-  const summaries = useMemo(() => {
-    if (!activeItems) return []
-    return activeItems.slice(0, 4)
-  }, [activeItems])
-  const hasMore = (activeItems?.length ?? 0) > summaries.length
+  
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -53,16 +48,8 @@ export default function PlayerModal({
           {error && <p className="error">Error: {error}</p>}
           {!loading && !error && (
             activeItems && activeItems.length > 0 ? (
-              <>
-                <div className="modal-intro">
-                  <div className="modal-pill">
-                    <span className="modal-pill-value">{activeItems.length}</span>
-                    <span className="modal-pill-label">total records</span>
-                  </div>
-                  <p className="muted">Showing the most recent {summaries.length} actions.</p>
-                </div>
                 <div className="punishment-cards" role="list">
-                  {summaries.map((p, idx) => (
+                  {activeItems.map((p: Punishment, idx: number) => (
                     <article key={idx} className="punishment-card" role="listitem">
                       <header className="punishment-card-header">
                         <span className="badge">{p.type}</span>
@@ -78,8 +65,6 @@ export default function PlayerModal({
                     </article>
                   ))}
                 </div>
-                {hasMore && <p className="muted">Open details to explore the full history ({activeItems.length - summaries.length} more entries).</p>}
-              </>
             ) : (
               <p className="muted">No active punishments.</p>
             )

@@ -57,7 +57,6 @@ services:
       api:
         condition: service_started
     environment:
-      # API server config
       TZ: Europe/Prague
       HOST: 0.0.0.0
     ports:

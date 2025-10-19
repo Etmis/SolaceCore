@@ -49,12 +49,11 @@ public final class UnbanCommand implements CommandExecutor {
                 if (punishmentType == PunishmentType.BAN || punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.IPBAN) {
                     database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
                     sender.sendMessage(lang.getMessage("punishment.unban_success", "player", targetName));
-                }
-                else {
-                    sender.sendMessage(lang.getMessage("punishment.not_banned", "player", targetName));
                     return true;
                 }
             }
+
+            sender.sendMessage(lang.getMessage("punishment.not_banned", "player", targetName));
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -9,5 +9,10 @@ database:
   password: ""
 
 appeal_url:
-  discord: "https://discord.gg/example"
-  website: "https://example.com/appeal"
+  discord:
+    name: "&1Discord"
+    link: "&9https://discord.gg/example"
+  website:
+    name: "&2Website"
+    link: "&ahttps://example.com/appeal"
+  # you can add more appeal methods here

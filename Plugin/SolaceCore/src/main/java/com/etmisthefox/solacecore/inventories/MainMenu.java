@@ -69,9 +69,9 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
 
         List<Component> punishLore = new ArrayList<>();
         if (punishments.isEmpty()) {
-            punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments_none")));
+            punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments.none")));
         } else {
-            punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments_header")));
+            punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments.header")));
             int maxLines = 15;
             int count = 0;
             for (Punishment p : punishments) {
@@ -96,14 +96,14 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
             }
             if (punishments.size() > maxLines) {
                 int more = punishments.size() - maxLines;
-                punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments_more", "count", String.valueOf(more))));
+                punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments.more", "count", String.valueOf(more))));
             }
         }
 
         // Paper with punishments next to the head
         ItemStack punishPaper = new ItemStack(Material.PAPER);
         ItemMeta punishMeta = punishPaper.getItemMeta();
-        punishMeta.displayName(Component.text(lang.getMessage("gui.main_menu.punishments_title"), NamedTextColor.YELLOW));
+        punishMeta.displayName(Component.text(lang.getMessage("gui.main_menu.punishments.title"), NamedTextColor.YELLOW));
         punishMeta.lore(punishLore);
         punishPaper.setItemMeta(punishMeta);
         contents.set(1, 5, ClickableItem.empty(punishPaper));

@@ -129,7 +129,7 @@ public final class PunishmentUtil {
                     sender.sendMessage(lang.getMessage("errors.no_permission"));
                     return;
                 }
-                Punishment punishment = new Punishment(0, targetName, reason, operator, "kick", LocalDateTime.now(), null, null, true);
+                Punishment punishment = new Punishment(0, targetName, reason, operator, "kick", LocalDateTime.now(), null, null, false);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
