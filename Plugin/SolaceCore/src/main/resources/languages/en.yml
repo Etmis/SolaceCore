@@ -9,6 +9,7 @@ usage:
   menu: "Usage: /menu <player>"
   ipban: "Usage: /ipban <player> [reason]"
   warn: "Usage: /warn <player> [reason]"
+  warns: "Usage: /warns <player> [page]"
 punishment:
   no_reason: "No reason specified"
   already_muted: "Player {player} is already muted."

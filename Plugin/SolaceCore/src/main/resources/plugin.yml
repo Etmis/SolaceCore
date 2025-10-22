@@ -46,6 +46,10 @@ commands:
     description: Warn a player
     usage: /warn <player> [reason]
     permission: solacecore.warn
+  warns:
+    description: View warnings of a player
+    usage: /warns <player>
+    permission: solacecore.warns
   menu:
     description: Main menu
     usage: /menu <player>
@@ -70,6 +74,8 @@ permissions:
   solacecore.unmute:
     default: op
   solacecore.warn:
+    default: op
+  solacecore.warns:
     default: op
   solacecore.banprotection:
     default: op

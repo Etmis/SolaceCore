@@ -8,6 +8,7 @@ messages:
     mute: "Použití: /mute <hráč> [důvod]"
     tempmute: "Použití: /tempmute <hráč> <doba> [důvod]"
     unmute: "Použití: /unmute <hráč>"
+    warns: "Použití: /warns <hráč> [strana]"
   punishment:
     already_muted: "Hráč {player} je již ztlumen."
     already_banned: "Hráč {player} je již zabanován."
@@ -41,3 +42,5 @@ messages:
   login:
     banned_permanent: "Na tomto serveru jsi permanentně zabanovaný. Důvod: {reason}. Ban udělil: {operator}"
     banned_temp: "Na tomto serveru jsi dočasně zabanovaný. Důvod: {reason}. Ban udělil: {operator}. Zbývající čas: {remaining}"
+warns:
+  none: "Žádné tresty pro hráče {player}."

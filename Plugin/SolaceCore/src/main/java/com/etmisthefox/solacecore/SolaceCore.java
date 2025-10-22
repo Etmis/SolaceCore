@@ -46,6 +46,7 @@ public final class SolaceCore extends JavaPlugin {
         registerCommand("tempmute", new TempmuteCommand(database, lang));
         registerCommand("unmute", new UnmuteCommand(database, lang));
         registerCommand("menu", new MenuCommand(database, lang, this, inventoryManager));
+        registerCommand("warns", new WarnsCommand(database, lang));
 
         getServer().getPluginManager().registerEvents(new ConnectionListener(database, lang), this);
         getServer().getPluginManager().registerEvents(new ChatListener(database, lang), this);

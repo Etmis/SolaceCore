@@ -1,5 +1,6 @@
 package com.etmisthefox.solacecore.models;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 public final class Punishment {
@@ -96,5 +97,17 @@ public final class Punishment {
         this.end = end;
         this.duration = duration;
         this.isActive = isActive;
+    }
+
+    public double getRemainingDuration() {
+        if (duration == null) {
+            return -1; // Permanentní trest
+        }
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime punishmentEnd = start.plusSeconds(duration);
+        if (now.isAfter(punishmentEnd)) {
+            return 0; // Trest vypršel
+        }
+        return Duration.between(now, punishmentEnd).getSeconds();
     }
 }

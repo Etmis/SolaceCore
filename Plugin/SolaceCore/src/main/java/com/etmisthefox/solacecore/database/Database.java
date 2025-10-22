@@ -195,7 +195,30 @@ public final class Database {
         return punishments;
     }
 
+    // Deactivate expired temporary punishments for given player
+    private void expirePunishmentsForName(String name) throws SQLException {
+        String sql = """
+                UPDATE punishments
+                SET isActive = FALSE,
+                    end = COALESCE(end, NOW()),
+                    duration = CASE WHEN start IS NOT NULL THEN TIMESTAMPDIFF(SECOND, start, NOW()) ELSE duration END
+                WHERE player_name = ?
+                  AND isActive = TRUE
+                  AND (
+                      (end IS NOT NULL AND end <= NOW())
+                      OR (duration IS NOT NULL AND start IS NOT NULL AND DATE_ADD(start, INTERVAL duration SECOND) <= NOW())
+                  )
+                """;
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, name);
+            statement.executeUpdate();
+        }
+    }
+
     public List<Punishment> getActivePunishmentsByName(String name) throws SQLException {
+        // First, expire any time-limited punishments that already passed
+        expirePunishmentsForName(name);
+
         String query = "SELECT * FROM punishments WHERE player_name = ? AND isActive = TRUE";
         List<Punishment> punishments = new ArrayList<>();
         try (PreparedStatement statement = getConnection().prepareStatement(query)) {

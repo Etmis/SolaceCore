@@ -12,6 +12,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.etmisthefox.solacecore.utils.TimeUtil.formatDuration;
@@ -45,7 +47,7 @@ public final class ConnectionListener implements Listener {
                             DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.tempban"),
                                     punishment.getReason(),
                                     punishment.getOperator(),
-                                    formatDuration(punishment.getDuration()))
+                                    formatDuration(Duration.between(LocalDateTime.now(), punishment.getStart().plusSeconds(punishment.getDuration())).getSeconds()))
                     );
                 }
             }
