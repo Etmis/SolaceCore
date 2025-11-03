@@ -23,7 +23,7 @@ public final class SolaceCore extends JavaPlugin {
         InventoryManager inventoryManager = new InventoryManager(this);
         inventoryManager.init();
 
-        DisconnectScreenUtil.setFc(getConfig());
+        DisconnectScreenUtil.init(getConfig());
 
         LanguageManager lang = new LanguageManager(this, getConfig().getString("language", "en"));
 

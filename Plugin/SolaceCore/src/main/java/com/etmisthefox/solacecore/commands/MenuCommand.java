@@ -4,6 +4,7 @@ import com.etmisthefox.inv.InventoryManager;
 import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.inventories.MainMenu;
 import com.etmisthefox.solacecore.managers.LanguageManager;
+import com.etmisthefox.solacecore.managers.PermissionManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -18,6 +19,7 @@ public final class MenuCommand implements CommandExecutor {
     private final LanguageManager lang;
     private final Plugin plugin;
     private final InventoryManager inventoryManager;
+    private final PermissionManager perms = new PermissionManager();
 
     public MenuCommand(Database database, LanguageManager lang, Plugin plugin, InventoryManager inventoryManager) {
         this.database = database;
@@ -33,6 +35,11 @@ public final class MenuCommand implements CommandExecutor {
             return true;
         }
 
+        if (!perms.canUseCommand(player, "menu")) {
+            player.sendMessage(lang.getMessage("errors.no_permission"));
+            return true;
+        }
+
         if (args.length < 1) {
             player.sendMessage(lang.getMessage("usage.menu"));
             return true;
@@ -41,11 +48,6 @@ public final class MenuCommand implements CommandExecutor {
         Player target = Bukkit.getPlayer(args[0]);
 
         // TODO: Support offline players
-
-        if (!player.hasPermission("solacecore.menu")) {
-            player.sendMessage(lang.getMessage("errors.no_permission"));
-            return true;
-        }
 
         MainMenu.getInventory(database, lang, plugin, inventoryManager, target).open(player);
         return true;

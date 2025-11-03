@@ -3,6 +3,7 @@ package com.etmisthefox.solacecore.utils;
 import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
+import com.etmisthefox.solacecore.managers.PermissionManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -13,26 +14,47 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public final class PunishmentUtil {
-    public static void executePunishment(Database database, LanguageManager lang, PunishmentType punishmentType, Player sender, Player target, String reason, Long durationSeconds) {
+
+    public static void executePunishment(Database database, LanguageManager languageManager, PunishmentType punishmentType, Player sender, Player target, String reason, Long durationSeconds) {
+        PermissionManager perms = new PermissionManager();
+
         if (target == null) {
-            sender.sendMessage(lang.getMessage("errors.player_not_found"));
+            sender.sendMessage(languageManager.getMessage("errors.player_not_found"));
+            return;
+        }
+
+        // Check permission for the command (or bypass)
+        String requiredNode = getPermissionNodeForPunishment(punishmentType);
+        if (!perms.canBypassRestrictions(sender) && (requiredNode == null || !sender.hasPermission(requiredNode))) {
+            sender.sendMessage(languageManager.getMessage("errors.no_permission"));
+            return;
+        }
+
+        // Target protection
+        if (perms.hasProtection(target, punishmentType)) {
+            switch (punishmentType) {
+                case KICK -> sender.sendMessage(languageManager.getMessage("punishment.kick_protection", "player", target.getName()));
+                case BAN, TEMPBAN, IPBAN -> sender.sendMessage(languageManager.getMessage("punishment.ban_protection", "player", target.getName()));
+                case MUTE, TEMPMUTE -> sender.sendMessage(languageManager.getMessage("punishment.mute_protection", "player", target.getName()));
+                case WARN -> { sender.sendMessage(languageManager.getMessage("punishment.warn_protection", "player", target.getName()));}
+            }
             return;
         }
 
         String operator = sender.getName();
         String targetName = target.getName();
 
+        // Prevent duplicate active punishments of same class
         if (punishmentType == PunishmentType.BAN || punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.IPBAN || punishmentType == PunishmentType.MUTE || punishmentType == PunishmentType.TEMPMUTE) {
             try {
                 List<Punishment> punishments = database.getActivePunishmentsByName(targetName);
                 for (Punishment p : punishments) {
                     String type = p.getPunishmentType();
                     if (type.equals("ban") || type.equals("tempban") || type.equals("ipban")) {
-                        sender.sendMessage(lang.getMessage("punishment.already_banned", "player", targetName));
+                        sender.sendMessage(languageManager.getMessage("punishment.already_banned", "player", targetName));
                         return;
-                    }
-                    else if (type.equals("mute") || type.equals("tempmute")) {
-                        sender.sendMessage(lang.getMessage("punishment.already_muted", "player", targetName));
+                    } else if (type.equals("mute") || type.equals("tempmute")) {
+                        sender.sendMessage(languageManager.getMessage("punishment.already_muted", "player", targetName));
                         return;
                     }
                 }
@@ -43,100 +65,76 @@ public final class PunishmentUtil {
 
         switch (punishmentType) {
             case BAN -> {
-                if (!sender.hasPermission("solacecore.ban")) {
-                    sender.sendMessage(lang.getMessage("errors.no_permission"));
-                    return;
-                }
-                target.kick(DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.banned"), reason, operator, null));
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.banned"), reason, operator, null));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ban", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                Bukkit.broadcast(Component.text(lang.getMessage("punishment.ban_success", "player", targetName, "reason", reason)));
+                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.ban_success", "player", targetName, "reason", reason)));
             }
             case IPBAN -> {
-                if (!sender.hasPermission("solacecore.ipban")) {
-                    sender.sendMessage(lang.getMessage("errors.no_permission"));
-                    return;
-                }
-                target.kick(DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.ipbanned"), reason, operator, null));
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.ipbanned"), reason, operator, null));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ipban", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                Bukkit.broadcast(Component.text(lang.getMessage("punishment.ipban_success", "player", targetName, "reason", reason)));
+                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.ipban_success", "player", targetName, "reason", reason)));
             }
             case TEMPBAN -> {
-                if (!sender.hasPermission("solacecore.tempban")) {
-                    sender.sendMessage(lang.getMessage("errors.no_permission"));
-                    return;
-                }
                 if (durationSeconds == null || durationSeconds <= 0) {
-                    sender.sendMessage(lang.getMessage("errors.invalid_time"));
+                    sender.sendMessage(languageManager.getMessage("errors.invalid_time"));
                     return;
                 }
                 LocalDateTime start = LocalDateTime.now();
                 LocalDateTime end = start.plusSeconds(durationSeconds);
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
-                target.kick(DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.tempbanned"), reason, operator, formattedTime));
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempbanned"), reason, operator, formattedTime));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempban", start, end, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                Bukkit.broadcast(Component.text(lang.getMessage("punishment.tempban_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason)));
+                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.tempban_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason)));
             }
             case MUTE -> {
-                if (!sender.hasPermission("solacecore.mute")) {
-                    sender.sendMessage(lang.getMessage("errors.no_permission"));
-                    return;
-                }
-                target.sendMessage(lang.getMessage("player_messages.muted", "reason", reason));
+                target.sendMessage(languageManager.getMessage("player_messages.muted", "reason", reason));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "mute", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                Bukkit.broadcast(Component.text(lang.getMessage("punishment.mute_success", "player", targetName, "reason", reason)));
+                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.mute_success", "player", targetName, "reason", reason)));
             }
             case TEMPMUTE -> {
-                if (!sender.hasPermission("solacecore.tempmute")) {
-                    sender.sendMessage(lang.getMessage("errors.no_permission"));
-                    return;
-                }
                 if (durationSeconds == null || durationSeconds <= 0) {
-                    sender.sendMessage(lang.getMessage("errors.invalid_time"));
+                    sender.sendMessage(languageManager.getMessage("errors.invalid_time"));
                     return;
                 }
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
-                target.sendMessage(lang.getMessage("player_messages.tempmuted", "time", formattedTime, "reason", reason));
+                target.sendMessage(languageManager.getMessage("player_messages.tempmuted", "time", formattedTime, "reason", reason));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempmute", LocalDateTime.now(), null, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                Bukkit.broadcast(Component.text(lang.getMessage("punishment.tempmute_success", "operator", sender.getName(), "player", targetName, "time", formattedTime, "reason", reason)));
+                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.tempmute_success", "operator", sender.getName(), "player", targetName, "time", formattedTime, "reason", reason)));
             }
             case KICK -> {
-                if (!sender.hasPermission("solacecore.kick")) {
-                    sender.sendMessage(lang.getMessage("errors.no_permission"));
-                    return;
-                }
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "kick", LocalDateTime.now(), null, null, false);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                target.kick(DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.kicked"), reason, operator, null));
-                Bukkit.broadcast(Component.text(lang.getMessage("broadcast.player_kicked", "player", targetName, "reason", reason)));
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.kicked"), reason, operator, null));
+                Bukkit.broadcast(Component.text(languageManager.getMessage("broadcast.player_kicked", "player", targetName, "reason", reason)));
             }
             case WARN -> {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "warn", LocalDateTime.now(), null, null, true);
@@ -145,9 +143,30 @@ public final class PunishmentUtil {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                target.sendMessage(lang.getMessage("player_messages.warned", "reason", reason, "operator", operator));
-                Bukkit.broadcast(Component.text(lang.getMessage("broadcast.player_warned", "player", targetName, "reason", reason)));
+                target.sendMessage(languageManager.getMessage("player_messages.warned", "reason", reason, "operator", operator));
+                Bukkit.broadcast(Component.text(languageManager.getMessage("broadcast.player_warned", "player", targetName, "reason", reason)));
             }
+        }
+    }
+
+    private static String getPermissionNodeForPunishment(PunishmentType type) {
+        switch (type) {
+            case KICK:
+                return PermissionManager.COMMAND_KICK;
+            case BAN:
+                return PermissionManager.COMMAND_BAN;
+            case TEMPBAN:
+                return PermissionManager.COMMAND_TEMPBAN;
+            case IPBAN:
+                return PermissionManager.COMMAND_IPBAN;
+            case MUTE:
+                return PermissionManager.COMMAND_MUTE;
+            case TEMPMUTE:
+                return PermissionManager.COMMAND_TEMPMUTE;
+            case WARN:
+                return PermissionManager.COMMAND_WARN;
+            default:
+                return null;
         }
     }
 }

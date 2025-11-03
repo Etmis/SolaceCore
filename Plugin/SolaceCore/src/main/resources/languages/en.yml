@@ -27,6 +27,7 @@ punishment:
   warn_success: "Player {player} has been warned. Reason: {reason}"
   kick_protection: "Player {player} can't be kicked because they have kick protection"
   ban_protection: "Player {player} can't be banned because they have ban protection"
+  warn_protection: "Player {player} can't be warned because they have warn protection"
 broadcast:
   player_kicked: "{player} was kicked. Reason: {reason}"
   player_banned: "{player} was banned. Reason: {reason}"

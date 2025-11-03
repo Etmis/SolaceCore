@@ -38,13 +38,15 @@ public final class ConnectionListener implements Listener {
                 PunishmentType type = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
                 switch (type) {
                     case PunishmentType.BAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                            DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.ban"),
+                            DisconnectScreenUtil.formatDisconnectScreen(false,
+                                    lang.getMessage("player_messages.ban"),
                                     punishment.getReason(),
                                     punishment.getOperator(),
                                     null)
                     );
                     case PunishmentType.TEMPBAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                            DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.tempban"),
+                            DisconnectScreenUtil.formatDisconnectScreen(false,
+                                    lang.getMessage("player_messages.tempban"),
                                     punishment.getReason(),
                                     punishment.getOperator(),
                                     formatDuration(Duration.between(LocalDateTime.now(), punishment.getStart().plusSeconds(punishment.getDuration())).getSeconds()))
@@ -53,7 +55,8 @@ public final class ConnectionListener implements Listener {
             }
             for (Punishment ipPunishment : ipPunishments) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                        DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.ipban"),
+                        DisconnectScreenUtil.formatDisconnectScreen(false,
+                                lang.getMessage("player_messages.ipban"),
                                 ipPunishment.getReason(),
                                 ipPunishment.getOperator(),
                                 null));

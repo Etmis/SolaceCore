@@ -21,8 +21,6 @@ public final class ChatInputUtil {
 
     private static final Map<UUID, PendingInput> PENDING = new ConcurrentHashMap<>();
 
-    private ChatInputUtil() {}
-
     public static boolean isWaiting(UUID uuid) {
         return PENDING.containsKey(uuid);
     }

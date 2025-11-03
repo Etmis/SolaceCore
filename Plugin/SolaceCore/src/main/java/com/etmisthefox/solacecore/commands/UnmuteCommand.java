@@ -3,6 +3,7 @@ package com.etmisthefox.solacecore.commands;
 import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
+import com.etmisthefox.solacecore.managers.PermissionManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,6 +17,7 @@ public final class UnmuteCommand implements CommandExecutor {
 
     private final Database database;
     private final LanguageManager lang;
+    private final PermissionManager perms = new PermissionManager();
 
     public UnmuteCommand(Database database, LanguageManager lang) {
         this.database = database;
@@ -24,8 +26,7 @@ public final class UnmuteCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-
-        if (!sender.hasPermission("solacecore.unmute")) {
+        if (!perms.canUseCommand(sender, "unmute")) {
             sender.sendMessage(lang.getMessage("errors.no_permission"));
             return true;
         }
@@ -50,8 +51,7 @@ public final class UnmuteCommand implements CommandExecutor {
                 if (punishmentType == PunishmentType.MUTE || punishmentType == PunishmentType.TEMPMUTE) {
                     database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
                     sender.sendMessage(lang.getMessage("punishment.unmute_success", "player", targetName));
-                }
-                else {
+                } else {
                     sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
                     return true;
                 }

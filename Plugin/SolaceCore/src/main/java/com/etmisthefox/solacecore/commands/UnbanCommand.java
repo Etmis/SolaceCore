@@ -3,6 +3,7 @@ package com.etmisthefox.solacecore.commands;
 import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
+import com.etmisthefox.solacecore.managers.PermissionManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,6 +17,7 @@ public final class UnbanCommand implements CommandExecutor {
 
     private final Database database;
     private final LanguageManager lang;
+    private final PermissionManager perms = new PermissionManager();
 
     public UnbanCommand(Database database, LanguageManager lang) {
         this.database = database;
@@ -23,8 +25,8 @@ public final class UnbanCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        if (!sender.hasPermission("solacecore.unban")) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+        if (!perms.canUseCommand(sender, "unban")) {
             sender.sendMessage(lang.getMessage("errors.no_permission"));
             return true;
         }
