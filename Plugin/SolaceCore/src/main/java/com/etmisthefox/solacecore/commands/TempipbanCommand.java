@@ -11,31 +11,46 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public final class IpbanCommand implements CommandExecutor {
+import static com.etmisthefox.solacecore.utils.TimeUtil.parseDuration;
+
+public final class TempipbanCommand implements CommandExecutor {
 
     private final Database database;
     private final LanguageManager lang;
 
-    public IpbanCommand(Database database, LanguageManager lang) {
+    public TempipbanCommand(Database database, LanguageManager lang) {
         this.database = database;
         this.lang = lang;
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        if (args.length < 1) {
-            sender.sendMessage(lang.getMessage("usage.ipban"));
+        if (args.length < 2) {
+            sender.sendMessage(lang.getMessage("usage.tempipban"));
+            return true;
+        }
+
+        long duration = parseDuration(args[1]);
+        if (duration <= 0) {
+            sender.sendMessage(lang.getMessage("errors.invalid_time"));
             return true;
         }
 
         StringBuilder reasonBuilder = new StringBuilder();
-        for (byte i = 1; i < args.length; i++) {
+        for (byte i = 2; i < args.length; i++) {
             reasonBuilder.append(args[i]);
             if (i < args.length - 1) reasonBuilder.append(" ");
         }
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, sender, Bukkit.getPlayer(args[0]), reason, null);
+        Player target = Bukkit.getPlayer(args[0]);
+        if (target == null) {
+            sender.sendMessage(lang.getMessage("errors.player_not_found"));
+            return true;
+        }
+
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPIPBAN, sender, target, reason, duration);
         return true;
     }
 }
+

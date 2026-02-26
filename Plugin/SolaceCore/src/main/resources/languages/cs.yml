@@ -1,15 +1,16 @@
 messages:
-  no_reason: "Žádný důvod nebyl uveden"
   usage:
     kick: "Použití: /kick <hráč> [důvod]"
     ban: "Použití: /ban <hráč> [důvod]"
     tempban: "Použití: /tempban <hráč> <doba> [důvod]"
+    tempipban: "Použití: /tempipban <hráč> <doba> [důvod]"
     unban: "Použití: /unban <hráč>"
     mute: "Použití: /mute <hráč> [důvod]"
     tempmute: "Použití: /tempmute <hráč> <doba> [důvod]"
     unmute: "Použití: /unmute <hráč>"
     warns: "Použití: /warns <hráč> [strana]"
   punishment:
+    no_reason: "Žádný důvod nebyl uveden"
     already_muted: "Hráč {player} je již ztlumen."
     already_banned: "Hráč {player} je již zabanován."
     not_muted: "Hráč {player} není ztlumen."
@@ -19,6 +20,7 @@ messages:
     unmute_success: "Hráč {player} byl odztlumen."
     ban_success: "Hráč {player} byl zabanován. Důvod: {reason}"
     tempban_success: "{operator} dočasně zabanoval hráče {player} na {time}. Důvod: {reason}"
+    tempipban_success: "{operator} dočasně zabanoval hráče {player} podle IP na {time}. Důvod: {reason}"
     unban_success: "Hráč {player} byl odbanován."
     kick_success: "Hráč {player} byl vykopnut. Důvod: {reason}"
     ipban_success: "Hráč {player} byl zabanován podle IP. Důvod: {reason}"
@@ -27,9 +29,10 @@ messages:
     kicked: "Byl jsi vykopnut! Důvod: {reason}"
     banned: "Byl jsi permanentně zabanován! Důvod: {reason}. Ban udělil: {operator}"
     tempbanned: "Byl jsi dočasně zabanován na {time}! Důvod: {reason}. Ban udělil: {operator}"
-    muted: "Byl jsi ztlumen! Důvod: {reason}"
-    tempmuted: "Byl jsi dočasně ztlumen na {time}! Důvod: {reason}"
-    unmuted: "Tvůj mute byl zrušen! Můžeš znovu psát."
+    tempipbanned: "Byl jsi dočasně zabanován podle IP na {time}! Důvod: {reason}. Ban udělil: {operator}"
+    muted: "Byl jsi ztlumen! Důvod: {reason}. Ztlumení udělil: {operator}"
+    tempmuted: "Byl jsi dočasně ztlumen na {time}! Důvod: {reason}. Ztlumení udělil: {operator}"
+    unmuted: "Tvůj mute byl zrušen! Můžeš znovu psát. Zrušil: {operator}"
     ipbanned: "Byl jsi zabanován podle IP adresy! Důvod: {reason}. Ban udělil: {operator}"
     warned: "Byl jsi varován! Důvod: {reason}. Varoval: {operator}"
   errors:
@@ -42,5 +45,12 @@ messages:
   login:
     banned_permanent: "Na tomto serveru jsi permanentně zabanovaný. Důvod: {reason}. Ban udělil: {operator}"
     banned_temp: "Na tomto serveru jsi dočasně zabanovaný. Důvod: {reason}. Ban udělil: {operator}. Zbývající čas: {remaining}"
-warns:
-  none: "Žádné tresty pro hráče {player}."
+  warns:
+    none: "Žádné tresty pro hráče {player}."
+
+discord:
+  action_logged: "✅ Akce **{action}** zaznamenána pro hráče **{player}**."
+  player_not_found: "❌ Hráč **{player}** nebyl nalezen na serveru."
+  invalid_duration: "❌ Neplatný formát doby. Použij: 10m, 1h, 2d."
+  error: "❌ Chyba: {error}"
+

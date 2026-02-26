@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 
-public class WarnsCommand implements CommandExecutor {
+public final class WarnsCommand implements CommandExecutor {
 
     private static final int PAGE_SIZE = 20;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");

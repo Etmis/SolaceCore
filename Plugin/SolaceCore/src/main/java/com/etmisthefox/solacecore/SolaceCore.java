@@ -8,6 +8,7 @@ import com.etmisthefox.solacecore.listeners.ConnectionListener;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.ChatInputUtil;
 import com.etmisthefox.solacecore.utils.DisconnectScreenUtil;
+import com.etmisthefox.solacecore.discord.DiscordManager;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -16,6 +17,8 @@ import java.sql.SQLException;
 public final class SolaceCore extends JavaPlugin {
 
     private Database database;
+    private LanguageManager lang;
+    private DiscordManager discordManager;
 
     @Override
     public void onEnable() {
@@ -25,21 +28,31 @@ public final class SolaceCore extends JavaPlugin {
 
         DisconnectScreenUtil.setFc(getConfig());
 
-        LanguageManager lang = new LanguageManager(this, getConfig().getString("language", "en"));
+        lang = new LanguageManager(this, getConfig().getString("language", "en"));
 
         database = new Database(this);
         try {
             database.initializeDatabase();
         } catch (SQLException e) {
-            e.printStackTrace();
+            getLogger().log(java.util.logging.Level.SEVERE, "Database error", e);
             getLogger().severe("Database error...");
             getServer().shutdown();
+        }
+
+        if (getConfig().getBoolean("discord_bot.enabled", false)) {
+            try {
+                discordManager = new DiscordManager(this, database, lang);
+                discordManager.initialize();
+            } catch (InterruptedException e) {
+                getLogger().log(java.util.logging.Level.SEVERE, "Failed to initialize Discord bot", e);
+            }
         }
 
         registerCommand("kick", new KickCommand(database, lang));
         registerCommand("ban", new BanCommand(database, lang));
         registerCommand("ipban", new IpbanCommand(database, lang));
         registerCommand("tempban", new TempbanCommand(database, lang));
+        registerCommand("tempipban", new TempipbanCommand(database, lang));
         registerCommand("unban", new UnbanCommand(database, lang));
         registerCommand("mute", new MuteCommand(database, lang));
         registerCommand("warn", new WarnCommand(database, lang));
@@ -68,5 +81,12 @@ public final class SolaceCore extends JavaPlugin {
         if (database != null) {
             database.closeConnection();
         }
+        if (discordManager != null) {
+            discordManager.shutdown();
+        }
+    }
+
+    public DiscordManager getDiscordManager() {
+        return discordManager;
     }
 }

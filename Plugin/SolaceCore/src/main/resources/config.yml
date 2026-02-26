@@ -8,6 +8,13 @@ database:
   user: "root"
   password: ""
 
+discord_bot:
+  enabled: false
+  token: "your_discord_bot_token_here"
+  bot_username: "SolaceCore"
+  logs_channel_id: "your_discord_logs_channel_id_here"
+  bot_avatar_url: ""  # URL to avatar image (leave empty to keep current)
+
 appeal_url:
   discord:
     name: "&1Discord"

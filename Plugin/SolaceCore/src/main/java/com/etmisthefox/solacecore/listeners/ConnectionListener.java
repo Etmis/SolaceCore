@@ -52,11 +52,19 @@ public final class ConnectionListener implements Listener {
                 }
             }
             for (Punishment ipPunishment : ipPunishments) {
-                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
-                        DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.ipban"),
-                                ipPunishment.getReason(),
-                                ipPunishment.getOperator(),
-                                null));
+                PunishmentType type = PunishmentType.valueOf(ipPunishment.getPunishmentType().toUpperCase());
+                switch (type) {
+                case PunishmentType.IPBAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
+                            DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.ipban"),
+                                    ipPunishment.getReason(),
+                                    ipPunishment.getOperator(),
+                                    null));
+                case PunishmentType.TEMPIPBAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
+                            DisconnectScreenUtil.formatDisconnectScreen(lang.getMessage("player_messages.tempipban"),
+                                    ipPunishment.getReason(),
+                                    ipPunishment.getOperator(),
+                                    formatDuration(Duration.between(LocalDateTime.now(), ipPunishment.getStart().plusSeconds(ipPunishment.getDuration())).getSeconds())));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

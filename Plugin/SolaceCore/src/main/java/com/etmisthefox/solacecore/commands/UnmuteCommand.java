@@ -24,7 +24,6 @@ public final class UnmuteCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-
         if (!sender.hasPermission("solacecore.unmute")) {
             sender.sendMessage(lang.getMessage("errors.no_permission"));
             return true;
@@ -46,16 +45,17 @@ public final class UnmuteCommand implements CommandExecutor {
             }
 
             for (Punishment punishment : punishments) {
+                System.out.println(punishment.getPunishmentType());
                 PunishmentType punishmentType = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
                 if (punishmentType == PunishmentType.MUTE || punishmentType == PunishmentType.TEMPMUTE) {
                     database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
+                    database.logAction("UNMUTE", sender.getName(), targetName, "Removed " + punishmentType.toString().toLowerCase() + " punishment", "ingame");
                     sender.sendMessage(lang.getMessage("punishment.unmute_success", "player", targetName));
-                }
-                else {
-                    sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
                     return true;
                 }
             }
+
+            sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
         } catch (SQLException e) {
             e.printStackTrace();
         }

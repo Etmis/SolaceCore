@@ -35,7 +35,7 @@ public final class MuteCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.MUTE, (Player) sender, Bukkit.getPlayer(args[0]), reason, null);
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.MUTE, sender, Bukkit.getPlayer(args[0]), reason, null);
         return true;
     }
 }
