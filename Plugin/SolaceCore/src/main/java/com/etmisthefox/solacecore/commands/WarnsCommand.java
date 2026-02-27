@@ -18,7 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class WarnsCommand implements CommandExecutor {
+public final class WarnsCommand implements CommandExecutor {
 
     private static final int PAGE_SIZE = 20;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("mm:HH dd-MM-yyyy");

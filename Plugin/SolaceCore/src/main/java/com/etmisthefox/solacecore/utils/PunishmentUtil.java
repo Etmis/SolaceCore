@@ -1,12 +1,15 @@
 package com.etmisthefox.solacecore.utils;
 
 import com.etmisthefox.solacecore.database.Database;
+import com.etmisthefox.solacecore.discord.DiscordManager;
+import com.etmisthefox.solacecore.discord.DiscordManager;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.managers.PermissionManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -16,14 +19,19 @@ import java.util.List;
 
 public final class PunishmentUtil {
 
-    // Backward-compatible API used by inventories/GUI where sender and target are online Players
-    public static void executePunishment(Database database, LanguageManager languageManager, PunishmentType punishmentType, Player sender, Player target, String reason, Long durationSeconds) {
-        // ...existing code...
-        executePunishment(database, languageManager, punishmentType, sender, target != null ? target.getName() : null, target, reason, durationSeconds);
+    private static void logToDiscord(String actionType, String operator, String targetName, String reason, String duration) {
+        DiscordManager dm = DiscordManager.getInstance();
+        if (dm != null) {
+            dm.logActionToDiscord(actionType, operator, targetName, reason, duration);
+        }
+    }
+
+    public static void executePunishment(Database database, LanguageManager lang, PunishmentType punishmentType, CommandSender sender, Player target, String reason, Long durationSeconds) {
+        executePunishment(database, lang, punishmentType, sender, target, reason, durationSeconds, "ingame");
     }
 
     // New safe API for commands: supports console sender and offline targets (target may be null)
-    public static void executePunishment(Database database, LanguageManager languageManager, PunishmentType punishmentType, CommandSender sender, String targetName, Player target, String reason, Long durationSeconds) {
+    public static void executePunishment(Database database, LanguageManager languageManager, PunishmentType punishmentType, CommandSender sender, Player target, String reason, Long durationSeconds, String source) {
         PermissionManager perms = new PermissionManager();
 
         // Validate target presence for punishments that require the player to be online
@@ -38,10 +46,10 @@ public final class PunishmentUtil {
                 // BAN/TEMPBAN/IPBAN can proceed even if target is offline (target == null)
             }
         }
-
+        String targetName = null;
         // Resolve operator and targetName safely
         String operator = sender.getName();
-        if (targetName == null && target != null) {
+        if (target != null) {
             targetName = target.getName();
         }
         if (targetName == null || targetName.isBlank()) {
@@ -66,7 +74,7 @@ public final class PunishmentUtil {
                 List<Punishment> punishments = database.getActivePunishmentsByName(targetName);
                 for (Punishment p : punishments) {
                     String type = p.getPunishmentType();
-                    if (type.equals("ban") || type.equals("tempban") || type.equals("ipban")) {
+                    if (type.equals("ban") || type.equals("tempban") || type.equals("ipban") || type.equals("tempipban")) {
                         sender.sendMessage(languageManager.getMessage("punishment.already_banned", "player", targetName));
                         return;
                     } else if (type.equals("mute") || type.equals("tempmute")) {
@@ -87,6 +95,8 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ban", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
+                    database.logAction("BAN", operator, targetName, reason, source);
+                    logToDiscord("BAN", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -99,10 +109,35 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ipban", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
+                    database.logAction("IPBAN", operator, targetName, reason, source);
+                    logToDiscord("IPBAN", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
                 Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.ipban_success", "player", targetName, "reason", reason)));
+            }
+            case TEMPIPBAN -> {
+                if (!sender.hasPermission("solacecore.tempipban")) {
+                    sender.sendMessage(languageManager.getMessage("errors.no_permission"));
+                    return;
+                }
+                if (durationSeconds == null || durationSeconds <= 0) {
+                    sender.sendMessage(languageManager.getMessage("errors.invalid_time"));
+                    return;
+                }
+                LocalDateTime start = LocalDateTime.now();
+                LocalDateTime end = start.plusSeconds(durationSeconds);
+                String formattedTime = TimeUtil.formatDuration(durationSeconds);
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempipbanned", "time", formattedTime, "reason", reason, "operator", operator), reason, operator, formattedTime));
+                Punishment punishment = new Punishment(0, targetName, reason, operator, "tempipban", start, end, durationSeconds, true);
+                try {
+                    database.createPunishment(punishment);
+                    database.logAction("TEMPIPBAN", operator, targetName, reason + " (Duration: " + formattedTime + ")", source);
+                    logToDiscord("TEMPIPBAN", operator, targetName, reason, formattedTime);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.tempipban_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason)));
             }
             case TEMPBAN -> {
                 if (durationSeconds == null || durationSeconds <= 0) {
@@ -112,12 +147,12 @@ public final class PunishmentUtil {
                 LocalDateTime start = LocalDateTime.now();
                 LocalDateTime end = start.plusSeconds(durationSeconds);
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
-                if (target != null) {
-                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempbanned"), reason, operator, formattedTime));
-                }
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempbanned"), reason, operator, formattedTime));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempban", start, end, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
+                    database.logAction("TEMPBAN", operator, targetName, reason + " (Duration: " + formattedTime + ")", source);
+                    logToDiscord("TEMPBAN", operator, targetName, reason, formattedTime);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -129,6 +164,8 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "mute", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
+                    database.logAction("MUTE", operator, targetName, reason, source);
+                    logToDiscord("MUTE", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -140,11 +177,12 @@ public final class PunishmentUtil {
                     return;
                 }
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
-                // target validated above to be non-null for TEMPMUTE
-                target.sendMessage(languageManager.getMessage("player_messages.tempmuted", "time", formattedTime, "reason", reason));
+                target.sendMessage(languageManager.getMessage("player_messages.tempmuted", "time", formattedTime, "reason", reason, "operator", operator));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempmute", LocalDateTime.now(), null, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
+                    database.logAction("TEMPMUTE", operator, targetName, reason + " (Duration: " + formattedTime + ")", source);
+                    logToDiscord("TEMPMUTE", operator, targetName, reason, formattedTime);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -155,6 +193,8 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "kick", LocalDateTime.now(), null, null, false);
                 try {
                     database.createPunishment(punishment);
+                    database.logAction("KICK", operator, targetName, reason, source);
+                    logToDiscord("KICK", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -167,6 +207,8 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "warn", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
+                    database.logAction("WARN", operator, targetName, reason, source);
+                    logToDiscord("WARN", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -178,23 +220,15 @@ public final class PunishmentUtil {
     }
 
     private static String getPermissionNodeForPunishment(PunishmentType type) {
-        switch (type) {
-            case KICK:
-                return PermissionManager.COMMAND_KICK;
-            case BAN:
-                return PermissionManager.COMMAND_BAN;
-            case TEMPBAN:
-                return PermissionManager.COMMAND_TEMPBAN;
-            case IPBAN:
-                return PermissionManager.COMMAND_IPBAN;
-            case MUTE:
-                return PermissionManager.COMMAND_MUTE;
-            case TEMPMUTE:
-                return PermissionManager.COMMAND_TEMPMUTE;
-            case WARN:
-                return PermissionManager.COMMAND_WARN;
-            default:
-                return null;
-        }
+        return switch (type) {
+            case KICK -> PermissionManager.COMMAND_KICK;
+            case BAN -> PermissionManager.COMMAND_BAN;
+            case TEMPBAN -> PermissionManager.COMMAND_TEMPBAN;
+            case IPBAN -> PermissionManager.COMMAND_IPBAN;
+            case MUTE -> PermissionManager.COMMAND_MUTE;
+            case TEMPMUTE -> PermissionManager.COMMAND_TEMPMUTE;
+            case WARN -> PermissionManager.COMMAND_WARN;
+            default -> null;
+        };
     }
 }

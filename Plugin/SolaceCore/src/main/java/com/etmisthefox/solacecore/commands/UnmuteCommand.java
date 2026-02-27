@@ -50,6 +50,7 @@ public final class UnmuteCommand implements CommandExecutor {
                 PunishmentType punishmentType = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
                 if (punishmentType == PunishmentType.MUTE || punishmentType == PunishmentType.TEMPMUTE) {
                     database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
+                    database.logAction("UNMUTE", sender.getName(), targetName, "Removed " + punishmentType.toString().toLowerCase() + " punishment", "ingame");
                     sender.sendMessage(lang.getMessage("punishment.unmute_success", "player", targetName));
                     return true;
                 }

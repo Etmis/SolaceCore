@@ -10,6 +10,7 @@ import com.etmisthefox.solacecore.listeners.ConnectionListener;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.ChatInputUtil;
 import com.etmisthefox.solacecore.utils.DisconnectScreenUtil;
+import com.etmisthefox.solacecore.discord.DiscordManager;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,6 +20,8 @@ public final class SolaceCore extends JavaPlugin {
 
     private Database database;
     private ModeratorWebSocketServer wsServer;
+    private LanguageManager lang;
+    private DiscordManager discordManager;
 
     @Override
     public void onEnable() {
@@ -28,7 +31,7 @@ public final class SolaceCore extends JavaPlugin {
 
         DisconnectScreenUtil.init(getConfig());
 
-        LanguageManager lang = new LanguageManager(this, getConfig().getString("language", "en"));
+        lang = new LanguageManager(this, getConfig().getString("language", "en"));
 
         database = new Database(this);
         try {
@@ -47,7 +50,7 @@ public final class SolaceCore extends JavaPlugin {
         getLogger().info("Port: " + wsPort);
         getLogger().info("URL: ws://localhost:" + wsPort);
         getLogger().info("═══════════════════════════════════════════════════════");
-        
+
         ModCommandHandler commandHandler = new ModCommandHandler(database, lang, this);
         wsServer = new ModeratorWebSocketServer(wsPort, this, commandHandler);
         try {
@@ -58,10 +61,20 @@ public final class SolaceCore extends JavaPlugin {
             e.printStackTrace();
         }
 
+        if (getConfig().getBoolean("discord_bot.enabled", false)) {
+            try {
+                discordManager = new DiscordManager(this, database, lang);
+                discordManager.initialize();
+            } catch (InterruptedException e) {
+                getLogger().log(java.util.logging.Level.SEVERE, "Failed to initialize Discord bot", e);
+            }
+        }
+
         registerCommand("kick", new KickCommand(database, lang));
         registerCommand("ban", new BanCommand(database, lang));
         registerCommand("ipban", new IpbanCommand(database, lang));
         registerCommand("tempban", new TempbanCommand(database, lang));
+        registerCommand("tempipban", new TempipbanCommand(database, lang));
         registerCommand("unban", new UnbanCommand(database, lang));
         registerCommand("mute", new MuteCommand(database, lang));
         registerCommand("warn", new WarnCommand(database, lang));
@@ -97,5 +110,12 @@ public final class SolaceCore extends JavaPlugin {
                 getLogger().warning("Error stopping WebSocket server: " + e.getMessage());
             }
         }
+        if (discordManager != null) {
+            discordManager.shutdown();
+        }
+    }
+
+    public DiscordManager getDiscordManager() {
+        return discordManager;
     }
 }

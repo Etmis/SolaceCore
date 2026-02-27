@@ -8,6 +8,7 @@ usage:
   unmute: "Usage: /unmute <player>"
   menu: "Usage: /menu <player>"
   ipban: "Usage: /ipban <player> [reason]"
+  tempipban: "Usage: /tempipban <player> <duration> [reason]"
   warn: "Usage: /warn <player> [reason]"
   warns: "Usage: /warns <player> [page]"
 punishment:
@@ -24,6 +25,7 @@ punishment:
   unban_success: "Player {player} has been unbanned."
   kick_success: "Player {player} has been kicked. Reason: {reason}"
   ipban_success: "Player {player} has been IP-banned. Reason: {reason}"
+  tempipban_success: "{operator} has temporarily IP-banned player {player} for {time}. Reason: {reason}"
   warn_success: "Player {player} has been warned. Reason: {reason}"
   kick_protection: "Player {player} can't be kicked because they have kick protection"
   ban_protection: "Player {player} can't be banned because they have ban protection"
@@ -32,6 +34,7 @@ broadcast:
   player_kicked: "{player} was kicked. Reason: {reason}"
   player_banned: "{player} was banned. Reason: {reason}"
   player_tempbanned: "{player} was temporarily banned for {time}. Reason: {reason}"
+  player_tempipbanned: "{player} was temporarily IP-banned for {time}. Reason: {reason}"
   player_unbanned: "{player} was unbanned."
   player_ipbanned: "{player} was IP-banned. Reason: {reason}"
   player_muted: "{player} was muted. Reason: {reason}"
@@ -40,15 +43,17 @@ broadcast:
   player_warned: "{player} was warned. Reason: {reason}"
 player_messages:
   kicked: "You have been kicked!"
-  banned: "You have been permanently banned!"
-  tempbanned: "You have been temporarily banned!"
+  banned: "You have been permanently banned! Reason: {reason}. Banned by: {operator}"
+  tempbanned: "You have been temporarily banned for {time}! Reason: {reason}. Banned by: {operator}"
+  tempipbanned: "You have been temporarily IP-banned for {time}! Reason: {reason}. Banned by: {operator}"
   muted: "You have been muted! Reason: {reason}. Muted by: {operator}"
   tempmuted: "You have been temporarily muted for {time}! Reason: {reason}. Muted by: {operator}"
   unmuted: "Your mute has been lifted! You can chat again. Unmuted by: {operator}"
-  ipbanned: "You have been IP-banned!"
+  ipbanned: "You have been IP-banned! Reason: {reason}. Banned by: {operator}"
   warned: "You have been warned! Reason: {reason}. Warned by: {operator}"
   ban: "You are permanently banned on this server!"
   tempban: "You are temporarily banned on this server!"
+  tempipban: "You are temporarily IP-banned on this server!"
   ipban: "You are permanently IP-banned on this server!"
 errors:
   invalid_time: "Invalid time format. Use: 10m, 1h, 2d."
@@ -112,3 +117,10 @@ gui:
     cancelled_keep_reason: "Operation cancelled. Reason kept: {reason}"
     duration_set: "Duration set: {duration}"
     reason_set: "Reason set: {reason}"
+
+discord:
+  action_logged: "✅ Action **{action}** logged for player **{player}**."
+  player_not_found: "❌ Player **{player}** not found on server."
+  invalid_duration: "❌ Invalid duration format. Use: 10m, 1h, 2d."
+  error: "❌ Error: {error}"
+

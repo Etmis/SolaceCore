@@ -35,8 +35,7 @@ public final class IpbanCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        Player target = Bukkit.getPlayer(args[0]);
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, sender, args[0], target, reason, null);
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, sender, Bukkit.getPlayer(args[0]), reason, null);
         return true;
     }
 }

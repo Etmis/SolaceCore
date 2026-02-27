@@ -89,6 +89,27 @@ public final class Database {
             operatorsTableStatement.execute(operatorsTableSQL);
             log.info("Operators table successfully created.");
         }
+
+        // Tabulka action_logs
+        try (Statement actionLogsTableStatement = getConnection().createStatement()) {
+            String actionLogsTableSQL = """
+                    CREATE TABLE IF NOT EXISTS `action_logs` (
+                       `id` INT NOT NULL AUTO_INCREMENT,
+                       `action_type` VARCHAR(50) NOT NULL,
+                       `operator` VARCHAR(16) DEFAULT NULL,
+                       `target_player` VARCHAR(16) DEFAULT NULL,
+                       `reason` VARCHAR(255) DEFAULT NULL,
+                       `timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                       `source` VARCHAR(20) DEFAULT 'ingame',
+                       PRIMARY KEY (`id`),
+                       INDEX (`operator`),
+                       INDEX (`target_player`),
+                       INDEX (`timestamp`)
+                    );
+                    """;
+            actionLogsTableStatement.execute(actionLogsTableSQL);
+            log.info("Action logs table successfully created.");
+        }
     }
 
     public void addPlayer(String playerName, String uuid, String ipAddress) throws SQLException {
@@ -171,7 +192,7 @@ public final class Database {
     }
 
     public List<Punishment> getActivePunishmentsByIp(String hostAddress) throws SQLException {
-        String query = "SELECT p.* FROM punishments p JOIN players pl ON pl.name = p.player_name WHERE pl.ipAddress = ? AND p.punishmentType = 'ipban' AND p.isActive = TRUE";
+        String query = "SELECT p.* FROM punishments p JOIN players pl ON pl.name = p.player_name WHERE pl.ipAddress = ? AND p.isActive = TRUE AND p.punishmentType IN ('ipban', 'tempipban')";
         List<Punishment> punishments = new ArrayList<>();
         try (PreparedStatement statement = getConnection().prepareStatement(query)) {
             statement.setString(1, hostAddress);
@@ -217,7 +238,7 @@ public final class Database {
 
     public List<Punishment> getActivePunishmentsByName(String name) throws SQLException {
         // First, expire any time-limited punishments that already passed
-        expirePunishmentsForName(name);
+        //expirePunishmentsForName(name);
 
         String query = "SELECT * FROM punishments WHERE player_name = ? AND isActive = TRUE";
         List<Punishment> punishments = new ArrayList<>();
@@ -241,5 +262,17 @@ public final class Database {
             }
         }
         return punishments;
+    }
+
+    public void logAction(String actionType, String operator, String targetPlayer, String reason, String source) throws SQLException {
+        String sql = "INSERT INTO action_logs(action_type, operator, target_player, reason, source) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, actionType);
+            statement.setString(2, operator);
+            statement.setString(3, targetPlayer);
+            statement.setString(4, reason);
+            statement.setString(5, source);
+            statement.executeUpdate();
+        }
     }
 }

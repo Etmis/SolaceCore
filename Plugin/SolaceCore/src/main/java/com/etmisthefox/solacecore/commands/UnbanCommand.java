@@ -48,8 +48,9 @@ public final class UnbanCommand implements CommandExecutor {
 
             for (Punishment punishment : punishments) {
                 PunishmentType punishmentType = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
-                if (punishmentType == PunishmentType.BAN || punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.IPBAN) {
+                if (punishmentType == PunishmentType.BAN || punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.IPBAN || punishmentType == PunishmentType.TEMPIPBAN) {
                     database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
+                    database.logAction("UNBAN", sender.getName(), targetName, "Removed " + punishmentType.toString().toLowerCase() + " punishment", "ingame");
                     sender.sendMessage(lang.getMessage("punishment.unban_success", "player", targetName));
                     return true;
                 }

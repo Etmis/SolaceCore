@@ -8,6 +8,7 @@ usage:
   unmute: "Použití: /unmute <hráč>"
   menu: "Použití: /menu <hráč>"
   ipban: "Použití: /ipban <hráč> [důvod]"
+  tempipban: "Použití: /tempipban <hráč> <doba> [důvod]"
   warn: "Použití: /warn <hráč> [důvod]"
   warns: "Použití: /warns <hráč> [strana]"
 punishment:
@@ -24,6 +25,7 @@ punishment:
   unban_success: "Hráč {player} byl odbanován."
   kick_success: "Hráč {player} byl vykopnut. Důvod: {reason}"
   ipban_success: "Hráč {player} byl zabanován podle IP. Důvod: {reason}"
+  tempipban_success: "{operator} dočasně zabanoval hráče {player} podle IP na {time}. Důvod: {reason}"
   warn_success: "Hráč {player} byl varován. Důvod: {reason}"
   kick_protection: "Hráč {player} nemůže být vykopnut, protože má ochranu před vykopnutím"
   ban_protection: "Hráč {player} nemůže být zabanován, protože má ochranu před banem"
@@ -62,6 +64,8 @@ chat:
 login:
   banned_permanent: "Na tomto serveru jsi permanentně zabanovaný. Důvod: {reason}. Ban udělil: {operator}"
   banned_temp: "Na tomto serveru jsi dočasně zabanovaný. Důvod: {reason}. Ban udělil: {operator}. Zbývající čas: {remaining}"
+warns:
+  none: "Žádné tresty pro hráče {player}."
 gui:
   common:
     active_tag: "[AKTIVNÍ]"
@@ -112,3 +116,10 @@ gui:
     cancelled_keep_reason: "Operace zrušena. Důvod ponechán: {reason}"
     duration_set: "Doba nastavena: {duration}"
     reason_set: "Důvod nastaven: {reason}"
+
+discord:
+  action_logged: "✅ Akce **{action}** zaznamenána pro hráče **{player}**."
+  player_not_found: "❌ Hráč **{player}** nebyl nalezen na serveru."
+  invalid_duration: "❌ Neplatný formát doby. Použij: 10m, 1h, 2d."
+  error: "❌ Chyba: {error}"
+
