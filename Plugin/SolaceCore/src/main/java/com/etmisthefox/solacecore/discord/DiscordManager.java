@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -37,7 +38,7 @@ public final class DiscordManager {
         String botName = plugin.getConfig().getString("discord_bot.bot_username");
         String botAvatarUrl = plugin.getConfig().getString("discord_bot.bot_avatar_url");
 
-        jda = JDABuilder.create(token, net.dv8tion.jda.api.requests.GatewayIntent.getIntents(0)).build().awaitReady();
+        jda = JDABuilder.create(token, GatewayIntent.getIntents(0)).build().awaitReady();
 
         // Set bot name if configured
         if (botName != null && !botName.isEmpty()) {
@@ -71,6 +72,7 @@ public final class DiscordManager {
         }
 
         DiscordCommandHandler commandHandler = new DiscordCommandHandler(database, lang);
+        commandHandler.registerCommands(jda);
 
         jda.addEventListener(commandHandler);
     }

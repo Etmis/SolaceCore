@@ -147,7 +147,7 @@ public final class PunishmentUtil {
                 LocalDateTime start = LocalDateTime.now();
                 LocalDateTime end = start.plusSeconds(durationSeconds);
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
-                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempbanned"), reason, operator, formattedTime));
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempbanned", "time", formattedTime, "reason", reason, "operator", operator), reason, operator, formattedTime));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempban", start, end, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);

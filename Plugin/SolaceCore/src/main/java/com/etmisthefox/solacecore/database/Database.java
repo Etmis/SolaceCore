@@ -238,7 +238,7 @@ public final class Database {
 
     public List<Punishment> getActivePunishmentsByName(String name) throws SQLException {
         // First, expire any time-limited punishments that already passed
-        //expirePunishmentsForName(name);
+        expirePunishmentsForName(name);
 
         String query = "SELECT * FROM punishments WHERE player_name = ? AND isActive = TRUE";
         List<Punishment> punishments = new ArrayList<>();

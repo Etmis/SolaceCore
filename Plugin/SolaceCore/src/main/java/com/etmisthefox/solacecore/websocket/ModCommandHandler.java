@@ -66,7 +66,7 @@ public class ModCommandHandler {
         // Naplánovat na hlavní vlákno
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
-            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.BAN, Bukkit.getConsoleSender(), playerName, player, reason, null);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.BAN, Bukkit.getConsoleSender(), player, reason, null);
 
             server.sendSuccess(conn, "ban", "Player " + playerName + " has been banned");
 
@@ -91,7 +91,7 @@ public class ModCommandHandler {
         // Naplánovat na hlavní vlákno
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
-            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), playerName, player, reason, duration);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), player, reason, duration);
 
             server.sendSuccess(conn, "tempban", "Player " + playerName + " has been temporarily banned");
 
@@ -131,7 +131,7 @@ public class ModCommandHandler {
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
-                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.KICK, Bukkit.getConsoleSender(), playerName, player, reason, null);
+                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.KICK, Bukkit.getConsoleSender(), player, reason, null);
                 server.sendSuccess(conn, "kick", "Player " + playerName + " has been kicked");
             } else {
                 server.sendError(conn, "Player is not online");
@@ -156,7 +156,7 @@ public class ModCommandHandler {
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
-                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.WARN, Bukkit.getConsoleSender(), playerName, player, reason, null);
+                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.WARN, Bukkit.getConsoleSender(), player, reason, null);
                 server.sendSuccess(conn, "warn", "Player " + playerName + " has been warned");
             } else {
                 server.sendError(conn, "Player is not online");
@@ -184,9 +184,9 @@ public class ModCommandHandler {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
                 if (duration > 0) {
-                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPMUTE, Bukkit.getConsoleSender(), playerName, player, reason, duration);
+                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPMUTE, Bukkit.getConsoleSender(), player, reason, duration);
                 } else {
-                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.MUTE, Bukkit.getConsoleSender(), playerName, player, reason, null);
+                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.MUTE, Bukkit.getConsoleSender(), player, reason, null);
                 }
 
                 server.sendSuccess(conn, "mute", "Player " + playerName + " has been muted");

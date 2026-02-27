@@ -19,7 +19,7 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DiscordCommandHandler extends ListenerAdapter {
+public final class DiscordCommandHandler extends ListenerAdapter {
 
     private final Database database;
     private final LanguageManager lang;
@@ -66,52 +66,6 @@ public class DiscordCommandHandler extends ListenerAdapter {
         ).queue(
                 success -> System.out.println("✅ Successfully registered " + success.size() + " slash commands!"),
                 error -> System.err.println("❌ Failed to register commands: " + error.getMessage())
-        );
-    }
-
-    public void registerGuildCommands(JDA jda, String guildId) {
-        // Guild-specific commands update instantly (for testing)
-        var guild = jda.getGuildById(guildId);
-        if (guild == null) {
-            System.err.println("❌ Guild with ID " + guildId + " not found!");
-            return;
-        }
-
-        guild.updateCommands().addCommands(
-                Commands.slash("ban", "Ban a player from the server")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for ban", false),
-                Commands.slash("unban", "Unban a player from the server")
-                        .addOption(OptionType.STRING, "player", "Player name", true),
-                Commands.slash("kick", "Kick a player from the server")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for kick", false),
-                Commands.slash("mute", "Mute a player")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for mute", false),
-                Commands.slash("unmute", "Unmute a player")
-                        .addOption(OptionType.STRING, "player", "Player name", true),
-                Commands.slash("warn", "Warn a player")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for warning", false),
-                Commands.slash("tempban", "Temporarily ban a player")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "duration", "Duration (e.g., 7d, 24h, 30m)", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for ban", false),
-                Commands.slash("tempmute", "Temporarily mute a player")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "duration", "Duration (e.g., 7d, 24h, 30m)", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for mute", false),
-                Commands.slash("ipban", "IP ban a player")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for IP ban", false),
-                Commands.slash("tempipban", "Temporarily IP ban a player")
-                        .addOption(OptionType.STRING, "player", "Player name", true)
-                        .addOption(OptionType.STRING, "duration", "Duration (e.g., 7d, 24h, 30m)", true)
-                        .addOption(OptionType.STRING, "reason", "Reason for IP ban", false)
-        ).queue(
-                success -> System.out.println("✅ Successfully registered " + success.size() + " guild-specific slash commands!"),
-                error -> System.err.println("❌ Failed to register guild commands: " + error.getMessage())
         );
     }
 
