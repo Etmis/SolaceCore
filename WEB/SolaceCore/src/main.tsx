@@ -5,6 +5,7 @@ import App from './App.tsx'
 import Privacy from './Privacy.tsx'
 import Terms from './Terms.tsx'
 import PlayerDetailsPage from './PlayerDetails.tsx'
+import { AuthProvider } from './contexts/AuthContext'
 
 function Root() {
   const path = typeof window !== 'undefined' ? window.location.pathname : '/'
@@ -23,6 +24,8 @@ function Root() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Root />
+    <AuthProvider>
+      <Root />
+    </AuthProvider>
   </StrictMode>,
 )

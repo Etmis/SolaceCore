@@ -25,7 +25,7 @@ public final class UnmuteCommand implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!perms.canUseCommand(sender, "unmute")) {
             sender.sendMessage(lang.getMessage("errors.no_permission"));
             return true;
@@ -51,11 +51,11 @@ public final class UnmuteCommand implements CommandExecutor {
                 if (punishmentType == PunishmentType.MUTE || punishmentType == PunishmentType.TEMPMUTE) {
                     database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
                     sender.sendMessage(lang.getMessage("punishment.unmute_success", "player", targetName));
-                } else {
-                    sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
                     return true;
                 }
             }
+
+            sender.sendMessage(lang.getMessage("punishment.not_muted", "player", targetName));
         } catch (SQLException e) {
             e.printStackTrace();
         }

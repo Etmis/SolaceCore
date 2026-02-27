@@ -3,4 +3,12 @@ dist
 .git
 .gitignore
 Dockerfile
+Dockerfile.api
 .dockerignore
+.env
+.env.*
+*.md
+*.sql
+server/cache/
+docker-compose*.yml
+generate-jwt-secret.*

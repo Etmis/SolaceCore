@@ -34,7 +34,8 @@ public final class WarnCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, (Player) sender, Bukkit.getPlayer(args[0]), reason, null);
+        Player target = Bukkit.getPlayer(args[0]);
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, sender, args[0], target, reason, null);
         return true;
     }
 }

@@ -4,7 +4,11 @@ import type { Player, Stats } from './types.ts'
 import PlayerCard from './components/PlayerCard.tsx'
 import PlayerModal from './components/PlayerModal.tsx'
 import StatsBar from './components/StatsBar.tsx'
-import { FaSearch, FaHeart } from "react-icons/fa";
+import Login from './components/Login.tsx'
+import RoleManagement from './components/RoleManagement.tsx'
+import { useAuth } from './contexts/AuthContext'
+import { initializeMinecraftWebSocket } from './services/MinecraftWebSocket.ts'
+import { FaSearch, FaHeart, FaUserShield, FaSignInAlt, FaSignOutAlt } from "react-icons/fa";
 import { FiMoon, FiSun } from "react-icons/fi";
 
 export default function App() {
@@ -14,6 +18,9 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Player | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRoleManagement, setShowRoleManagement] = useState(false)
+  const { moderator, logout } = useAuth()
   const [cookieAccepted, setCookieAccepted] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('cookieConsent') === 'accepted'
@@ -33,6 +40,11 @@ export default function App() {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  // Inicializuj WebSocket připojení k Minecraft serveru
+  useEffect(() => {
+    initializeMinecraftWebSocket()
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -114,6 +126,39 @@ export default function App() {
               aria-label="Search players"
             />
           </div>
+          
+          {moderator && (
+            <>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => setShowRoleManagement(true)}
+                title="Role Management"
+              >
+                <FaUserShield /> Roles
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={logout}
+                title={`Logout ${moderator.username}`}
+              >
+                <FaSignOutAlt /> Logout
+              </button>
+            </>
+          )}
+          
+          {!moderator && (
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setShowLogin(true)}
+              title="Moderator Login"
+            >
+              <FaSignInAlt /> Login
+            </button>
+          )}
+          
           <button
             type="button"
             className="theme-toggle"
@@ -150,6 +195,24 @@ export default function App() {
 
       {selected && (
         <PlayerModal player={selected} onClose={() => setSelected(null)} />
+      )}
+      
+      {showLogin && (
+        <Login onClose={() => setShowLogin(false)} />
+      )}
+      
+      {showRoleManagement && (
+        <div className="modal-overlay" onClick={() => setShowRoleManagement(false)}>
+          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Role Management</h2>
+              <button className="close-btn" onClick={() => setShowRoleManagement(false)}>×</button>
+            </div>
+            <div className="modal-content">
+              <RoleManagement />
+            </div>
+          </div>
+        </div>
       )}
 
       <footer className="footer">

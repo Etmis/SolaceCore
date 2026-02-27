@@ -32,3 +32,35 @@ export type Stats = {
   totalBans?: number
   totalPunishments?: number
 }
+
+export type Moderator = {
+  id: number
+  username: string
+  permissions: Record<string, boolean>
+}
+
+export type Role = {
+  id: number
+  name: string
+  permissions: Record<string, boolean>
+  createdAt?: string
+}
+
+export type ModAction = {
+  id: number
+  moderator_id: number
+  moderator_username: string
+  action_type: string
+  target_player: string
+  reason: string | null
+  duration: number | null
+  timestamp: string
+}
+
+export type LoginResponse = {
+  token: string
+  moderator: {
+    id: number
+    username: string
+  }
+}

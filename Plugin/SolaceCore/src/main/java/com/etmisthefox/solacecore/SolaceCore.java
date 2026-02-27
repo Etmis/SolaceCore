@@ -2,6 +2,8 @@ package com.etmisthefox.solacecore;
 
 import com.etmisthefox.solacecore.commands.*;
 import com.etmisthefox.solacecore.database.Database;
+import com.etmisthefox.solacecore.websocket.ModeratorWebSocketServer;
+import com.etmisthefox.solacecore.websocket.ModCommandHandler;
 import com.etmisthefox.inv.InventoryManager;
 import com.etmisthefox.solacecore.listeners.ChatListener;
 import com.etmisthefox.solacecore.listeners.ConnectionListener;
@@ -16,6 +18,7 @@ import java.sql.SQLException;
 public final class SolaceCore extends JavaPlugin {
 
     private Database database;
+    private ModeratorWebSocketServer wsServer;
 
     @Override
     public void onEnable() {
@@ -34,6 +37,25 @@ public final class SolaceCore extends JavaPlugin {
             e.printStackTrace();
             getLogger().severe("Database error...");
             getServer().shutdown();
+            return; // Zastavit další inicializaci
+        }
+
+        // Inicializovat WebSocket server
+        int wsPort = getConfig().getInt("websocket-port", 8080);
+        getLogger().info("═══════════════════════════════════════════════════════");
+        getLogger().info("Starting Moderator WebSocket Server...");
+        getLogger().info("Port: " + wsPort);
+        getLogger().info("URL: ws://localhost:" + wsPort);
+        getLogger().info("═══════════════════════════════════════════════════════");
+        
+        ModCommandHandler commandHandler = new ModCommandHandler(database, lang, this);
+        wsServer = new ModeratorWebSocketServer(wsPort, this, commandHandler);
+        try {
+            wsServer.start();
+            getLogger().info("✓ WebSocket server STARTED on port " + wsPort);
+        } catch (Exception e) {
+            getLogger().severe("✗ Failed to start WebSocket server: " + e.getMessage());
+            e.printStackTrace();
         }
 
         registerCommand("kick", new KickCommand(database, lang));
@@ -67,6 +89,13 @@ public final class SolaceCore extends JavaPlugin {
         ChatInputUtil.cancelAll();
         if (database != null) {
             database.closeConnection();
+        }
+        if (wsServer != null) {
+            try {
+                wsServer.stop();
+            } catch (Exception e) {
+                getLogger().warning("Error stopping WebSocket server: " + e.getMessage());
+            }
         }
     }
 }

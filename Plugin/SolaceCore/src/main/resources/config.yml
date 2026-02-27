@@ -1,5 +1,9 @@
 language: en
 
+# WebSocket port pro moderátorské akce z webu
+# Web se bude připojovat na: ws://localhost:8080
+websocket-port: 8080
+
 database:
 # only mysql (for now)
   ip_address: "127.0.0.1"

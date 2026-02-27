@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public final class LanguageManager {
 
@@ -24,18 +26,42 @@ public final class LanguageManager {
             langFolder.mkdirs();
         }
 
-        copyDefaultLanguages("en.yml");
+        copyAllLanguageFiles();
 
         File langFile = new File(langFolder, language + ".yml");
         langConfig = YamlConfiguration.loadConfiguration(langFile);
     }
 
-    private void copyDefaultLanguages(String... languages) {
-        for (String lang : languages) {
-            File targetFile = new File(langFolder, lang);
-            if (!targetFile.exists()) {
-                saveResource("languages/" + lang, targetFile);
+    private void copyAllLanguageFiles() {
+        try {
+            File jarFile = new File(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (jarFile.isFile()) {
+                try (JarFile jar = new JarFile(jarFile)) {
+                    jar.stream()
+                        .filter(entry -> entry.getName().startsWith("languages/") && entry.getName().endsWith(".yml"))
+                        .forEach(entry -> {
+                            String fileName = entry.getName().substring("languages/".length());
+                            File targetFile = new File(langFolder, fileName);
+                            if (!targetFile.exists()) {
+                                saveResource(entry.getName(), targetFile);
+                            }
+                        });
+                }
+            } else {
+                // Running in IDE - copy from resources directory
+                File resourcesDir = new File(plugin.getClass().getClassLoader().getResource("languages").toURI());
+                File[] files = resourcesDir.listFiles((dir, name) -> name.endsWith(".yml"));
+                if (files != null) {
+                    for (File file : files) {
+                        File targetFile = new File(langFolder, file.getName());
+                        if (!targetFile.exists()) {
+                            saveResource("languages/" + file.getName(), targetFile);
+                        }
+                    }
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

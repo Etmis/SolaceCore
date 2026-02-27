@@ -55,9 +55,6 @@ commands:
     usage: /menu <player>
     permission: solacecore.menu
 permissions:
-  solacecore.admin:
-    default: op
-  solacecore.bypass:
   solacecore.kick:
     default: op
   solacecore.ban:

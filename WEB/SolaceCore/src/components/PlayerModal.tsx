@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPunishments } from '../api.ts'
 import type { Player, Punishment } from '../types.ts'
+import { useAuth } from '../contexts/AuthContext'
+import ModActions from './ModActions'
 
 export default function PlayerModal({
   player,
@@ -12,6 +14,21 @@ export default function PlayerModal({
   const [items, setItems] = useState<Punishment[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const { moderator } = useAuth()
+  const [showModActions, setShowModActions] = useState(false)
+
+  const loadPunishments = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await fetchPunishments(player.uuid)
+      setItems(data)
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load punishments')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -71,6 +88,15 @@ export default function PlayerModal({
           )}
         </div>
         <footer className="modal-footer">
+          {moderator && !showModActions && (
+            <button 
+              type="button" 
+              className="btn btn-primary" 
+              onClick={() => setShowModActions(true)}
+            >
+              Moderator Actions
+            </button>
+          )}
           <button type="button" className="btn btn-ghost" onClick={onClose}>Close</button>
           <button
             type="button"
@@ -80,6 +106,18 @@ export default function PlayerModal({
             Open details
           </button>
         </footer>
+        
+        {moderator && showModActions && (
+          <div className="modal-mod-section">
+            <ModActions 
+              playerName={player.name} 
+              onActionComplete={() => {
+                setShowModActions(false)
+                loadPunishments()
+              }} 
+            />
+          </div>
+        )}
       </div>
     </div>
   )
