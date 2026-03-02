@@ -64,3 +64,6 @@ Plugin/SolaceCore/server/
 
 # Web server cache (runtime only)
 WEB/SolaceCore/server/cache/
+
+# Setup script
+setup.bat
