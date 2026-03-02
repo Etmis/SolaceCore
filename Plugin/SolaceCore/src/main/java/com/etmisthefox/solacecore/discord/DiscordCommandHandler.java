@@ -111,7 +111,6 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                         database.unpunishPlayer(playerName, "ban");
                         database.unpunishPlayer(playerName, "tempban");
                         database.unpunishPlayer(playerName, "ipban");
-                        database.logAction("UNBAN", operator, playerName, "Unbanned via Discord", "discord");
                         DiscordManager dm = DiscordManager.getInstance();
                         if (dm != null) {
                             dm.logActionToDiscord("UNBAN", operator, playerName, "Unbanned via Discord", null);
@@ -137,7 +136,6 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                     case "unmute" -> {
                         database.unpunishPlayer(playerName, "mute");
                         database.unpunishPlayer(playerName, "tempmute");
-                        database.logAction("UNMUTE", operator, playerName, "Unmuted via Discord", "discord");
                         DiscordManager dm = DiscordManager.getInstance();
                         if (dm != null) {
                             dm.logActionToDiscord("UNMUTE", operator, playerName, "Unmuted via Discord", null);

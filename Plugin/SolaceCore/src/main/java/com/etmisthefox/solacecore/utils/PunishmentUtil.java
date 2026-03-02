@@ -2,14 +2,12 @@ package com.etmisthefox.solacecore.utils;
 
 import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.discord.DiscordManager;
-import com.etmisthefox.solacecore.discord.DiscordManager;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.managers.PermissionManager;
 import com.etmisthefox.solacecore.models.Punishment;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -95,7 +93,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ban", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("BAN", operator, targetName, reason, source);
                     logToDiscord("BAN", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -109,7 +106,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ipban", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("IPBAN", operator, targetName, reason, source);
                     logToDiscord("IPBAN", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -132,7 +128,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempipban", start, end, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("TEMPIPBAN", operator, targetName, reason + " (Duration: " + formattedTime + ")", source);
                     logToDiscord("TEMPIPBAN", operator, targetName, reason, formattedTime);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -151,7 +146,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempban", start, end, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("TEMPBAN", operator, targetName, reason + " (Duration: " + formattedTime + ")", source);
                     logToDiscord("TEMPBAN", operator, targetName, reason, formattedTime);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -164,7 +158,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "mute", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("MUTE", operator, targetName, reason, source);
                     logToDiscord("MUTE", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -181,7 +174,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempmute", LocalDateTime.now(), null, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("TEMPMUTE", operator, targetName, reason + " (Duration: " + formattedTime + ")", source);
                     logToDiscord("TEMPMUTE", operator, targetName, reason, formattedTime);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -193,7 +185,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "kick", LocalDateTime.now(), null, null, false);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("KICK", operator, targetName, reason, source);
                     logToDiscord("KICK", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -207,7 +198,6 @@ public final class PunishmentUtil {
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "warn", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
-                    database.logAction("WARN", operator, targetName, reason, source);
                     logToDiscord("WARN", operator, targetName, reason, null);
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -217,18 +207,5 @@ public final class PunishmentUtil {
                 Bukkit.broadcast(Component.text(languageManager.getMessage("broadcast.player_warned", "player", targetName, "reason", reason)));
             }
         }
-    }
-
-    private static String getPermissionNodeForPunishment(PunishmentType type) {
-        return switch (type) {
-            case KICK -> PermissionManager.COMMAND_KICK;
-            case BAN -> PermissionManager.COMMAND_BAN;
-            case TEMPBAN -> PermissionManager.COMMAND_TEMPBAN;
-            case IPBAN -> PermissionManager.COMMAND_IPBAN;
-            case MUTE -> PermissionManager.COMMAND_MUTE;
-            case TEMPMUTE -> PermissionManager.COMMAND_TEMPMUTE;
-            case WARN -> PermissionManager.COMMAND_WARN;
-            default -> null;
-        };
     }
 }

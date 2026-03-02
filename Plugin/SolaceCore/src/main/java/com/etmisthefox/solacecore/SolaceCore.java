@@ -45,19 +45,19 @@ public final class SolaceCore extends JavaPlugin {
 
         // Inicializovat WebSocket server
         int wsPort = getConfig().getInt("websocket-port", 8080);
-        getLogger().info("═══════════════════════════════════════════════════════");
+        getLogger().info("=======================================================");
         getLogger().info("Starting Moderator WebSocket Server...");
         getLogger().info("Port: " + wsPort);
         getLogger().info("URL: ws://localhost:" + wsPort);
-        getLogger().info("═══════════════════════════════════════════════════════");
+        getLogger().info("=======================================================");
 
         ModCommandHandler commandHandler = new ModCommandHandler(database, lang, this);
         wsServer = new ModeratorWebSocketServer(wsPort, this, commandHandler);
         try {
             wsServer.start();
-            getLogger().info("✓ WebSocket server STARTED on port " + wsPort);
+            getLogger().info("WebSocket server STARTED on port " + wsPort);
         } catch (Exception e) {
-            getLogger().severe("✗ Failed to start WebSocket server: " + e.getMessage());
+            getLogger().severe("Failed to start WebSocket server: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -113,9 +113,5 @@ public final class SolaceCore extends JavaPlugin {
         if (discordManager != null) {
             discordManager.shutdown();
         }
-    }
-
-    public DiscordManager getDiscordManager() {
-        return discordManager;
     }
 }

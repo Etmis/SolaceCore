@@ -21,9 +21,9 @@ public final class Database {
         this.log = plugin.getLogger();
     }
 
-    public Connection getConnection() throws SQLException {
+    public synchronized Connection getConnection() throws SQLException {
 
-        if (connection != null) {
+        if (connection != null && !connection.isClosed()) {
             return connection;
         }
 
@@ -89,26 +89,17 @@ public final class Database {
             operatorsTableStatement.execute(operatorsTableSQL);
             log.info("Operators table successfully created.");
         }
+    }
 
-        // Tabulka action_logs
-        try (Statement actionLogsTableStatement = getConnection().createStatement()) {
-            String actionLogsTableSQL = """
-                    CREATE TABLE IF NOT EXISTS `action_logs` (
-                       `id` INT NOT NULL AUTO_INCREMENT,
-                       `action_type` VARCHAR(50) NOT NULL,
-                       `operator` VARCHAR(16) DEFAULT NULL,
-                       `target_player` VARCHAR(16) DEFAULT NULL,
-                       `reason` VARCHAR(255) DEFAULT NULL,
-                       `timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP,
-                       `source` VARCHAR(20) DEFAULT 'ingame',
-                       PRIMARY KEY (`id`),
-                       INDEX (`operator`),
-                       INDEX (`target_player`),
-                       INDEX (`timestamp`)
-                    );
-                    """;
-            actionLogsTableStatement.execute(actionLogsTableSQL);
-            log.info("Action logs table successfully created.");
+    public synchronized void closeConnection() {
+        if (this.connection != null) {
+            try {
+                this.connection.close();
+                this.connection = null;
+                log.info("Database connection closed.");
+            } catch (SQLException e) {
+                log.severe("Failed to close database connection: " + e.getMessage());
+            }
         }
     }
 
@@ -143,31 +134,6 @@ public final class Database {
         }
     }
 
-    public List<Punishment> getPunishmentsByName(String name) throws SQLException {
-        String query = "SELECT * FROM punishments WHERE player_name = ?";
-        List<Punishment> punishments = new ArrayList<>();
-        try (PreparedStatement statement = getConnection().prepareStatement(query)) {
-            statement.setString(1, name);
-            try (ResultSet results = statement.executeQuery()) {
-                while (results.next()) {
-                    int id = results.getInt("id");
-                    String playerName = results.getString("player_name");
-                    String reason = results.getString("reason");
-                    String operator = results.getString("operator");
-                    String punishmentType = results.getString("punishmentType");
-                    Timestamp startTimestamp = results.getTimestamp("start");
-                    LocalDateTime start = (startTimestamp != null) ? startTimestamp.toLocalDateTime() : null;
-                    Timestamp endTimestamp = results.getTimestamp("end");
-                    LocalDateTime end = (endTimestamp != null) ? endTimestamp.toLocalDateTime() : null;
-                    Long duration = results.getObject("duration") != null ? results.getLong("duration") : null;
-                    boolean isActive = results.getBoolean("isActive");
-                    punishments.add(new Punishment(id, playerName, reason, operator, punishmentType, start, end, duration, isActive));
-                }
-            }
-        }
-        return punishments;
-    }
-
     public void unpunishPlayer(String name, String punishmentType) throws SQLException {
         String query = "UPDATE punishments SET isActive = FALSE, end = ?, duration = TIMESTAMPDIFF(SECOND, start, ?) WHERE player_name = ? AND punishmentType = ? AND isActive = TRUE";
         try (PreparedStatement statement = getConnection().prepareStatement(query)) {
@@ -180,15 +146,18 @@ public final class Database {
         }
     }
 
-    public void closeConnection() {
-        if (this.connection != null) {
-            try {
-                this.connection.close();
-                log.info("Database connection closed.");
-            } catch (SQLException e) {
-                log.severe("Failed to close database connection: " + e.getMessage());
+    public List<Punishment> getPunishmentsByName(String name) throws SQLException {
+        String query = "SELECT * FROM punishments WHERE player_name = ?";
+        List<Punishment> punishments = new ArrayList<>();
+        try (PreparedStatement statement = getConnection().prepareStatement(query)) {
+            statement.setString(1, name);
+            try (ResultSet results = statement.executeQuery()) {
+                while (results.next()) {
+                    punishments.add(mapPunishment(results));
+                }
             }
         }
+        return punishments;
     }
 
     public List<Punishment> getActivePunishmentsByIp(String hostAddress) throws SQLException {
@@ -198,18 +167,7 @@ public final class Database {
             statement.setString(1, hostAddress);
             try (ResultSet results = statement.executeQuery()) {
                 while (results.next()) {
-                    int id = results.getInt("id");
-                    String playerName = results.getString("player_name");
-                    String reason = results.getString("reason");
-                    String operator = results.getString("operator");
-                    String punishmentType = results.getString("punishmentType");
-                    Timestamp startTimestamp = results.getTimestamp("start");
-                    LocalDateTime start = (startTimestamp != null) ? startTimestamp.toLocalDateTime() : null;
-                    Timestamp endTimestamp = results.getTimestamp("end");
-                    LocalDateTime end = (endTimestamp != null) ? endTimestamp.toLocalDateTime() : null;
-                    Long duration = results.getObject("duration") != null ? results.getLong("duration") : null;
-                    boolean isActive = results.getBoolean("isActive");
-                    punishments.add(new Punishment(id, playerName, reason, operator, punishmentType, start, end, duration, isActive));
+                    punishments.add(mapPunishment(results));
                 }
             }
         }
@@ -246,33 +204,25 @@ public final class Database {
             statement.setString(1, name);
             try (ResultSet results = statement.executeQuery()) {
                 while (results.next()) {
-                    int id = results.getInt("id");
-                    String playerName = results.getString("player_name");
-                    String reason = results.getString("reason");
-                    String operator = results.getString("operator");
-                    String punishmentType = results.getString("punishmentType");
-                    Timestamp startTimestamp = results.getTimestamp("start");
-                    LocalDateTime start = (startTimestamp != null) ? startTimestamp.toLocalDateTime() : null;
-                    Timestamp endTimestamp = results.getTimestamp("end");
-                    LocalDateTime end = (endTimestamp != null) ? endTimestamp.toLocalDateTime() : null;
-                    Long duration = results.getObject("duration") != null ? results.getLong("duration") : null;
-                    boolean isActive = results.getBoolean("isActive");
-                    punishments.add(new Punishment(id, playerName, reason, operator, punishmentType, start, end, duration, isActive));
+                    punishments.add(mapPunishment(results));
                 }
             }
         }
         return punishments;
     }
 
-    public void logAction(String actionType, String operator, String targetPlayer, String reason, String source) throws SQLException {
-        String sql = "INSERT INTO action_logs(action_type, operator, target_player, reason, source) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
-            statement.setString(1, actionType);
-            statement.setString(2, operator);
-            statement.setString(3, targetPlayer);
-            statement.setString(4, reason);
-            statement.setString(5, source);
-            statement.executeUpdate();
-        }
+    private Punishment mapPunishment(ResultSet results) throws SQLException {
+        int id = results.getInt("id");
+        String playerName = results.getString("player_name");
+        String reason = results.getString("reason");
+        String operator = results.getString("operator");
+        String punishmentType = results.getString("punishmentType");
+        Timestamp startTimestamp = results.getTimestamp("start");
+        LocalDateTime start = (startTimestamp != null) ? startTimestamp.toLocalDateTime() : null;
+        Timestamp endTimestamp = results.getTimestamp("end");
+        LocalDateTime end = (endTimestamp != null) ? endTimestamp.toLocalDateTime() : null;
+        Long duration = results.getObject("duration") != null ? results.getLong("duration") : null;
+        boolean isActive = results.getBoolean("isActive");
+        return new Punishment(id, playerName, reason, operator, punishmentType, start, end, duration, isActive);
     }
 }
