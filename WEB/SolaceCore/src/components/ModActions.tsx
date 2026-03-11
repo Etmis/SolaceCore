@@ -11,16 +11,11 @@ interface ModActionsProps {
 export default function ModActions({ playerName, onActionComplete }: ModActionsProps) {
   const { hasPermission } = useAuth()
   const [reason, setReason] = useState('')
-  const [duration, setDuration] = useState('3600000') // 1 hour default
+  const [duration, setDuration] = useState('3600') // 1 hour default (seconds)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   const handleAction = async (action: () => Promise<any>, actionName: string) => {
-    if (!reason.trim() && actionName !== 'unban' && actionName !== 'unmute') {
-      setMessage({ type: 'error', text: 'Reason is required' })
-      return
-    }
-
     setLoading(true)
     setMessage(null)
 
@@ -43,13 +38,13 @@ export default function ModActions({ playerName, onActionComplete }: ModActionsP
       <h3>Moderator Actions</h3>
 
       <div className="form-group">
-        <label htmlFor="reason">Reason</label>
+        <label htmlFor="reason">Reason (optional)</label>
         <input
           id="reason"
           type="text"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Enter reason for action"
+          placeholder="Reason"
           disabled={loading}
         />
       </div>
@@ -65,7 +60,7 @@ export default function ModActions({ playerName, onActionComplete }: ModActionsP
           <>
             <button
               className="btn btn-danger"
-              onClick={() => handleAction(() => banPlayer(playerName, reason), 'Ban')}
+              onClick={() => handleAction(() => banPlayer(playerName, reason.trim() || undefined), 'Ban')}
               disabled={loading}
             >
               <FaBan /> Ban
@@ -73,7 +68,13 @@ export default function ModActions({ playerName, onActionComplete }: ModActionsP
 
             <button
               className="btn btn-warning"
-              onClick={() => handleAction(() => tempBanPlayer(playerName, parseInt(duration), reason), 'TempBan')}
+              onClick={() => handleAction(() => {
+                const durationSeconds = Number.parseInt(duration, 10)
+                if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+                  throw new Error('Duration must be a positive number of seconds')
+                }
+                return tempBanPlayer(playerName, durationSeconds, reason.trim() || undefined)
+              }, 'TempBan')}
               disabled={loading}
             >
               <FaBan /> TempBan
@@ -94,7 +95,7 @@ export default function ModActions({ playerName, onActionComplete }: ModActionsP
         {hasPermission('warn') && (
           <button
             className="btn btn-warning"
-            onClick={() => handleAction(() => warnPlayer(playerName, reason), 'Warn')}
+            onClick={() => handleAction(() => warnPlayer(playerName, reason.trim() || undefined), 'Warn')}
             disabled={loading}
           >
             <FaExclamationTriangle /> Warn
@@ -104,7 +105,7 @@ export default function ModActions({ playerName, onActionComplete }: ModActionsP
         {hasPermission('kick') && (
           <button
             className="btn btn-secondary"
-            onClick={() => handleAction(() => kickPlayer(playerName, reason), 'Kick')}
+            onClick={() => handleAction(() => kickPlayer(playerName, reason.trim() || undefined), 'Kick')}
             disabled={loading}
           >
             <FaDoorOpen /> Kick
@@ -114,7 +115,17 @@ export default function ModActions({ playerName, onActionComplete }: ModActionsP
         {hasPermission('mute') && (
           <button
             className="btn btn-secondary"
-            onClick={() => handleAction(() => mutePlayer(playerName, reason, parseInt(duration)), 'Mute')}
+            onClick={() => handleAction(() => {
+              const trimmedDuration = duration.trim()
+              if (!trimmedDuration) {
+                return mutePlayer(playerName, reason.trim() || undefined, undefined)
+              }
+              const durationSeconds = Number.parseInt(trimmedDuration, 10)
+              if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+                throw new Error('Duration must be a positive number of seconds')
+              }
+              return mutePlayer(playerName, reason.trim() || undefined, durationSeconds)
+            }, 'Mute')}
             disabled={loading}
           >
             <FaVolumeMute /> Mute
@@ -134,20 +145,18 @@ export default function ModActions({ playerName, onActionComplete }: ModActionsP
 
       {(hasPermission('ban') || hasPermission('mute')) && (
         <div className="form-group">
-          <label htmlFor="duration">Duration</label>
-          <select
+          <label htmlFor="duration">Duration in seconds</label>
+          <input
             id="duration"
+            type="number"
+            min="1"
+            step="1"
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
+            placeholder="e.g. 3600"
             disabled={loading}
-          >
-            <option value="300000">5 minutes</option>
-            <option value="1800000">30 minutes</option>
-            <option value="3600000">1 hour</option>
-            <option value="86400000">1 day</option>
-            <option value="604800000">7 days</option>
-            <option value="2592000000">30 days</option>
-          </select>
+          />
+          <small>Examples: 300 (5m), 3600 (1h), 86400 (1d). For mute you can leave it empty for permanent.</small>
         </div>
       )}
     </div>

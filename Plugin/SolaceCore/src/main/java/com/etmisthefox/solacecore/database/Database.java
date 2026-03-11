@@ -76,19 +76,6 @@ public final class Database {
             punishmentsTableStatement.execute(punishmentsTableSQL);
             log.info("Punishments table successfully created (FK player_name -> players.name).");
         }
-
-        // Tabulka operators
-        try (Statement operatorsTableStatement = getConnection().createStatement()) {
-            String operatorsTableSQL = """
-                    CREATE TABLE IF NOT EXISTS `operators` (
-                        `id` INT NOT NULL AUTO_INCREMENT,
-                        `role` VARCHAR(16) DEFAULT NULL,
-                        PRIMARY KEY (`id`)
-                    );
-                    """;
-            operatorsTableStatement.execute(operatorsTableSQL);
-            log.info("Operators table successfully created.");
-        }
     }
 
     public synchronized void closeConnection() {

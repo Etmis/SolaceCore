@@ -787,6 +787,25 @@ h1 {
   overflow-y: auto;
 }
 
+.modal-fullscreen {
+  max-width: 95vw;
+  width: 100%;
+  height: 95vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-fullscreen .modal-header {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-fullscreen .modal-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
 .close-btn {
   background: none;
   border: none;

@@ -5,9 +5,8 @@ import PlayerCard from './components/PlayerCard.tsx'
 import PlayerModal from './components/PlayerModal.tsx'
 import StatsBar from './components/StatsBar.tsx'
 import Login from './components/Login.tsx'
-import RoleManagement from './components/RoleManagement.tsx'
+import AdminPanel from './components/AdminPanel.tsx'
 import { useAuth } from './contexts/AuthContext'
-import { initializeMinecraftWebSocket } from './services/MinecraftWebSocket.ts'
 import { FaSearch, FaHeart, FaUserShield, FaSignInAlt, FaSignOutAlt } from "react-icons/fa";
 import { FiMoon, FiSun } from "react-icons/fi";
 
@@ -19,7 +18,7 @@ export default function App() {
   const [selected, setSelected] = useState<Player | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [showLogin, setShowLogin] = useState(false)
-  const [showRoleManagement, setShowRoleManagement] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
   const { moderator, logout } = useAuth()
   const [cookieAccepted, setCookieAccepted] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
@@ -40,11 +39,6 @@ export default function App() {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('theme', theme)
   }, [theme])
-
-  // Inicializuj WebSocket připojení k Minecraft serveru
-  useEffect(() => {
-    initializeMinecraftWebSocket()
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -132,10 +126,10 @@ export default function App() {
               <button
                 type="button"
                 className="btn btn-sm"
-                onClick={() => setShowRoleManagement(true)}
-                title="Role Management"
+                onClick={() => setShowAdminPanel(true)}
+                title="Admin Panel"
               >
-                <FaUserShield /> Roles
+                <FaUserShield /> Admin
               </button>
               <button
                 type="button"
@@ -201,15 +195,15 @@ export default function App() {
         <Login onClose={() => setShowLogin(false)} />
       )}
       
-      {showRoleManagement && (
-        <div className="modal-overlay" onClick={() => setShowRoleManagement(false)}>
-          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
+      {showAdminPanel && (
+        <div className="modal-overlay" onClick={() => setShowAdminPanel(false)}>
+          <div className="modal modal-fullscreen" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Role Management</h2>
-              <button className="close-btn" onClick={() => setShowRoleManagement(false)}>×</button>
+              <h2>Administration Panel</h2>
+              <button className="close-btn" onClick={() => setShowAdminPanel(false)}>×</button>
             </div>
             <div className="modal-content">
-              <RoleManagement />
+              <AdminPanel />
             </div>
           </div>
         </div>

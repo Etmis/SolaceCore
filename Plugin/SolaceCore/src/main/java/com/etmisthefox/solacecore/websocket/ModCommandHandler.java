@@ -4,11 +4,15 @@ import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.PunishmentUtil;
+import com.etmisthefox.solacecore.models.Punishment;
 import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.java_websocket.WebSocket;
+
+import java.sql.SQLException;
+import java.util.List;
 
 public class ModCommandHandler {
 
@@ -25,26 +29,27 @@ public class ModCommandHandler {
     public void handleCommand(String action, JsonObject json, WebSocket conn, ModeratorWebSocketServer server) {
         String playerName = json.has("playerName") ? json.get("playerName").getAsString() : null;
         String reason = json.has("reason") ? json.get("reason").getAsString() : "No reason specified";
+        String moderator = json.has("moderator") ? json.get("moderator").getAsString() : null;
 
         try {
             switch (action.toLowerCase()) {
                 case "ban":
-                    handleBan(conn, server, playerName, reason);
+                    handleBan(conn, server, playerName, reason, moderator);
                     break;
                 case "tempban":
-                    handleTempBan(conn, server, playerName, reason, json);
+                    handleTempBan(conn, server, playerName, reason, json, moderator);
                     break;
                 case "unban":
                     handleUnban(conn, server, playerName);
                     break;
                 case "kick":
-                    handleKick(conn, server, playerName, reason);
+                    handleKick(conn, server, playerName, reason, moderator);
                     break;
                 case "warn":
-                    handleWarn(conn, server, playerName, reason);
+                    handleWarn(conn, server, playerName, reason, moderator);
                     break;
                 case "mute":
-                    handleMute(conn, server, playerName, reason, json);
+                    handleMute(conn, server, playerName, reason, json, moderator);
                     break;
                 case "unmute":
                     handleUnmute(conn, server, playerName);
@@ -57,7 +62,7 @@ public class ModCommandHandler {
         }
     }
 
-    private void handleBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason) {
+    private void handleBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
             server.sendError(conn, "Player name is required");
             return;
@@ -66,7 +71,7 @@ public class ModCommandHandler {
         // Naplánovat na hlavní vlákno
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
-            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.BAN, Bukkit.getConsoleSender(), player, reason, null);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.BAN, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
 
             server.sendSuccess(conn, "ban", "Player " + playerName + " has been banned");
 
@@ -80,7 +85,7 @@ public class ModCommandHandler {
         });
     }
 
-    private void handleTempBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json) {
+    private void handleTempBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
             server.sendError(conn, "Player name is required");
             return;
@@ -91,7 +96,7 @@ public class ModCommandHandler {
         // Naplánovat na hlavní vlákno
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
-            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), player, reason, duration);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), player, reason, duration, "web", moderator);
 
             server.sendSuccess(conn, "tempban", "Player " + playerName + " has been temporarily banned");
 
@@ -111,17 +116,39 @@ public class ModCommandHandler {
             return;
         }
 
-        // TODO: Implement unban functionality using PunishmentUtil if needed
-        server.sendSuccess(conn, "unban", "Player " + playerName + " has been unbanned");
+        try {
+            List<Punishment> punishments = database.getActivePunishmentsByName(playerName);
+            boolean unbanned = false;
 
-        JsonObject notification = new JsonObject();
-        notification.addProperty("type", "action");
-        notification.addProperty("action", "unban");
-        notification.addProperty("playerName", playerName);
-        server.sendToAll(notification);
+            for (Punishment punishment : punishments) {
+                String punishmentType = punishment.getPunishmentType();
+                if ("ban".equalsIgnoreCase(punishmentType)
+                        || "tempban".equalsIgnoreCase(punishmentType)
+                        || "ipban".equalsIgnoreCase(punishmentType)
+                        || "tempipban".equalsIgnoreCase(punishmentType)) {
+                    database.unpunishPlayer(playerName, punishmentType.toLowerCase());
+                    unbanned = true;
+                }
+            }
+
+            if (!unbanned) {
+                server.sendError(conn, "Player is not banned");
+                return;
+            }
+
+            server.sendSuccess(conn, "unban", "Player " + playerName + " has been unbanned");
+
+            JsonObject notification = new JsonObject();
+            notification.addProperty("type", "action");
+            notification.addProperty("action", "unban");
+            notification.addProperty("playerName", playerName);
+            server.sendToAll(notification);
+        } catch (SQLException e) {
+            server.sendError(conn, "Failed to unban player: " + e.getMessage());
+        }
     }
 
-    private void handleKick(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason) {
+    private void handleKick(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
             server.sendError(conn, "Player name is required");
             return;
@@ -131,7 +158,7 @@ public class ModCommandHandler {
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
-                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.KICK, Bukkit.getConsoleSender(), player, reason, null);
+                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.KICK, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
                 server.sendSuccess(conn, "kick", "Player " + playerName + " has been kicked");
             } else {
                 server.sendError(conn, "Player is not online");
@@ -146,7 +173,7 @@ public class ModCommandHandler {
         });
     }
 
-    private void handleWarn(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason) {
+    private void handleWarn(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
             server.sendError(conn, "Player name is required");
             return;
@@ -156,7 +183,7 @@ public class ModCommandHandler {
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
-                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.WARN, Bukkit.getConsoleSender(), player, reason, null);
+                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.WARN, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
                 server.sendSuccess(conn, "warn", "Player " + playerName + " has been warned");
             } else {
                 server.sendError(conn, "Player is not online");
@@ -171,7 +198,7 @@ public class ModCommandHandler {
         });
     }
 
-    private void handleMute(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json) {
+    private void handleMute(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
             server.sendError(conn, "Player name is required");
             return;
@@ -184,9 +211,9 @@ public class ModCommandHandler {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
                 if (duration > 0) {
-                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPMUTE, Bukkit.getConsoleSender(), player, reason, duration);
+                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPMUTE, Bukkit.getConsoleSender(), player, reason, duration, "web", moderator);
                 } else {
-                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.MUTE, Bukkit.getConsoleSender(), player, reason, null);
+                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.MUTE, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
                 }
 
                 server.sendSuccess(conn, "mute", "Player " + playerName + " has been muted");
@@ -210,20 +237,39 @@ public class ModCommandHandler {
             return;
         }
 
-        // TODO: Implement unmute functionality using PunishmentUtil if needed
+        try {
+            List<Punishment> punishments = database.getActivePunishmentsByName(playerName);
+            boolean unmuted = false;
 
-        Player player = Bukkit.getPlayer(playerName);
-        if (player != null) {
-            player.sendMessage("§a[UNMUTE] §fYou have been unmuted.");
+            for (Punishment punishment : punishments) {
+                String punishmentType = punishment.getPunishmentType();
+                if ("mute".equalsIgnoreCase(punishmentType) || "tempmute".equalsIgnoreCase(punishmentType)) {
+                    database.unpunishPlayer(playerName, punishmentType.toLowerCase());
+                    unmuted = true;
+                }
+            }
+
+            if (!unmuted) {
+                server.sendError(conn, "Player is not muted");
+                return;
+            }
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Player player = Bukkit.getPlayer(playerName);
+                if (player != null) {
+                    player.sendMessage("§a[UNMUTE] §fYou have been unmuted.");
+                }
+            });
+
+            server.sendSuccess(conn, "unmute", "Player " + playerName + " has been unmuted");
+
+            JsonObject notification = new JsonObject();
+            notification.addProperty("type", "action");
+            notification.addProperty("action", "unmute");
+            notification.addProperty("playerName", playerName);
+            server.sendToAll(notification);
+        } catch (SQLException e) {
+            server.sendError(conn, "Failed to unmute player: " + e.getMessage());
         }
-
-        server.sendSuccess(conn, "unmute", "Player " + playerName + " has been unmuted");
-
-        JsonObject notification = new JsonObject();
-        notification.addProperty("type", "action");
-        notification.addProperty("action", "unmute");
-        notification.addProperty("playerName", playerName);
-        server.sendToAll(notification);
     }
 }
-

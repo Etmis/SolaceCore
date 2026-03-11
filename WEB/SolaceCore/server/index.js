@@ -14,7 +14,7 @@ import WebSocket from 'ws'
 // Basic config from env
 const PORT = parseInt(process.env.PORT || '3001', 10)
 const WS_HOST = process.env.WS_HOST || '127.0.0.1'
-const WS_PORT = parseInt(process.env.WS_PORT || '8082', 10)
+const WS_PORT = parseInt(process.env.WS_PORT || '8080', 10)
 const DB_HOST = process.env.DB_HOST || '127.0.0.1'
 const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10)
 const DB_USER = process.env.DB_USER || 'root'
@@ -106,6 +106,47 @@ app.use(express.static(FRONTEND_DIST, { index: false }))
 // AUTH MIDDLEWARE
 // ========================================
 
+function parseModeratorRoles(rawRoles) {
+  if (!rawRoles) return []
+
+  let parsedRoles = rawRoles
+  if (typeof rawRoles === 'string') {
+    try {
+      parsedRoles = JSON.parse(rawRoles)
+    } catch {
+      return []
+    }
+  }
+
+  if (!Array.isArray(parsedRoles)) return []
+
+  const roleIds = parsedRoles
+    .map((value) => Number(value))
+    .filter((value) => Number.isInteger(value) && value > 0)
+
+  return Array.from(new Set(roleIds))
+}
+
+async function loadPermissionsFromRoleIds(roleIds) {
+  if (!roleIds.length) return {}
+
+  const placeholders = roleIds.map(() => '?').join(',')
+  const [roleRows] = await pool.query(
+    `SELECT permissions FROM roles WHERE id IN (${placeholders})`,
+    roleIds
+  )
+
+  const permissions = {}
+  for (const row of roleRows) {
+    const rolePerms = typeof row.permissions === 'string'
+      ? JSON.parse(row.permissions)
+      : row.permissions
+    Object.assign(permissions, rolePerms)
+  }
+
+  return permissions
+}
+
 // Middleware pro ověření JWT tokenu
 async function authenticateModerator(req, res, next) {
   const authHeader = req.headers.authorization
@@ -118,7 +159,7 @@ async function authenticateModerator(req, res, next) {
     const decoded = jwt.verify(token, JWT_SECRET)
     // Načíst moderátora z databáze
     const [modRows] = await pool.query(
-      'SELECT id, username, is_active FROM moderators WHERE id = ? LIMIT 1',
+      'SELECT id, username, is_active, roles FROM moderators WHERE id = ? LIMIT 1',
       [decoded.id]
     )
     
@@ -127,22 +168,8 @@ async function authenticateModerator(req, res, next) {
       return res.status(401).json({ error: 'Invalid token or inactive user' })
     }
 
-    // Načíst oprávnění moderátora ze všech jeho rolí
-    const [roleRows] = await pool.query(
-      `SELECT r.permissions FROM roles r
-       INNER JOIN moderator_roles mr ON r.id = mr.role_id
-       WHERE mr.moderator_id = ?`,
-      [moderator.id]
-    )
-
-    // Sloučit oprávnění ze všech rolí
-    const permissions = {}
-    for (const row of roleRows) {
-      const rolePerms = typeof row.permissions === 'string' 
-        ? JSON.parse(row.permissions) 
-        : row.permissions
-      Object.assign(permissions, rolePerms)
-    }
+    const moderatorRoleIds = parseModeratorRoles(moderator.roles)
+    const permissions = await loadPermissionsFromRoleIds(moderatorRoleIds)
 
     req.moderator = {
       id: moderator.id,
@@ -246,13 +273,6 @@ app.post('/api/mod/ban', authenticateModerator, requirePermission('ban'), async 
       [playerName, reason || 'No reason specified', req.moderator.username]
     )
 
-    // Zaznamenat akci
-    await pool.query(
-      `INSERT INTO mod_actions (moderator_id, action_type, target_player, reason) 
-       VALUES (?, 'ban', ?, ?)`,
-      [req.moderator.id, playerName, reason || 'No reason specified']
-    )
-
     // Poslat akci na Minecraft server přes WebSocket
     sendToMinecraft({
       action: 'ban',
@@ -276,19 +296,16 @@ app.post('/api/mod/tempban', authenticateModerator, requirePermission('ban'), as
   }
 
   try {
-    const durationMs = parseInt(duration, 10)
-    const endDate = new Date(Date.now() + durationMs)
+    const durationSeconds = parseInt(duration, 10)
+    if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return res.status(400).json({ error: 'Duration must be a positive number of seconds' })
+    }
+    const endDate = new Date(Date.now() + durationSeconds * 1000)
 
     await pool.query(
       `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, \`end\`, duration, isActive) 
        VALUES (?, ?, ?, 'tempban', NOW(), ?, ?, 1)`,
-      [playerName, reason || 'No reason specified', req.moderator.username, endDate, durationMs]
-    )
-
-    await pool.query(
-      `INSERT INTO mod_actions (moderator_id, action_type, target_player, reason, duration) 
-       VALUES (?, 'tempban', ?, ?, ?)`,
-      [req.moderator.id, playerName, reason || 'No reason specified', durationMs]
+      [playerName, reason || 'No reason specified', req.moderator.username, endDate, durationSeconds]
     )
 
     // Poslat akci na Minecraft server přes WebSocket
@@ -296,7 +313,7 @@ app.post('/api/mod/tempban', authenticateModerator, requirePermission('ban'), as
       action: 'tempban',
       playerName: playerName,
       reason: reason || 'No reason specified',
-      duration: durationMs,
+      duration: durationSeconds,
       moderator: req.moderator.username
     })
 
@@ -320,12 +337,6 @@ app.post('/api/mod/unban', authenticateModerator, requirePermission('unban'), as
       `UPDATE punishments SET isActive = 0 
        WHERE player_name = ? AND punishmentType IN ('ban', 'tempban') AND isActive = 1`,
       [playerName]
-    )
-
-    await pool.query(
-      `INSERT INTO mod_actions (moderator_id, action_type, target_player, reason) 
-       VALUES (?, 'unban', ?, 'Unbanned')`,
-      [req.moderator.id, playerName]
     )
 
     // Poslat akci na Minecraft server přes WebSocket
@@ -354,12 +365,6 @@ app.post('/api/mod/warn', authenticateModerator, requirePermission('warn'), asyn
       `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, isActive) 
        VALUES (?, ?, ?, 'warn', NOW(), 1)`,
       [playerName, reason || 'No reason specified', req.moderator.username]
-    )
-
-    await pool.query(
-      `INSERT INTO mod_actions (moderator_id, action_type, target_player, reason) 
-       VALUES (?, 'warn', ?, ?)`,
-      [req.moderator.id, playerName, reason || 'No reason specified']
     )
 
     // Poslat akci na Minecraft server přes WebSocket
@@ -391,12 +396,6 @@ app.post('/api/mod/kick', authenticateModerator, requirePermission('kick'), asyn
       [playerName, reason || 'No reason specified', req.moderator.username]
     )
 
-    await pool.query(
-      `INSERT INTO mod_actions (moderator_id, action_type, target_player, reason) 
-       VALUES (?, 'kick', ?, ?)`,
-      [req.moderator.id, playerName, reason || 'No reason specified']
-    )
-
     // Poslat akci na Minecraft server přes WebSocket
     sendToMinecraft({
       action: 'kick',
@@ -420,14 +419,18 @@ app.post('/api/mod/mute', authenticateModerator, requirePermission('mute'), asyn
   }
 
   try {
-    if (duration) {
-      const durationMs = parseInt(duration, 10)
-      const endDate = new Date(Date.now() + durationMs)
+    const durationSeconds = duration ? parseInt(duration, 10) : null
+
+    if (durationSeconds !== null) {
+      if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+        return res.status(400).json({ error: 'Duration must be a positive number of seconds' })
+      }
+      const endDate = new Date(Date.now() + durationSeconds * 1000)
       
       await pool.query(
         `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, \`end\`, duration, isActive) 
          VALUES (?, ?, ?, 'mute', NOW(), ?, ?, 1)`,
-        [playerName, reason || 'No reason specified', req.moderator.username, endDate, durationMs]
+        [playerName, reason || 'No reason specified', req.moderator.username, endDate, durationSeconds]
       )
     } else {
       await pool.query(
@@ -437,18 +440,12 @@ app.post('/api/mod/mute', authenticateModerator, requirePermission('mute'), asyn
       )
     }
 
-    await pool.query(
-      `INSERT INTO mod_actions (moderator_id, action_type, target_player, reason, duration) 
-       VALUES (?, 'mute', ?, ?, ?)`,
-      [req.moderator.id, playerName, reason || 'No reason specified', duration || null]
-    )
-
     // Poslat akci na Minecraft server přes WebSocket
     sendToMinecraft({
       action: 'mute',
       playerName: playerName,
       reason: reason || 'No reason specified',
-      duration: duration ? parseInt(duration, 10) : null,
+      duration: durationSeconds,
       moderator: req.moderator.username
     })
 
@@ -473,12 +470,6 @@ app.post('/api/mod/unmute', authenticateModerator, requirePermission('unmute'), 
       [playerName]
     )
 
-    await pool.query(
-      `INSERT INTO mod_actions (moderator_id, action_type, target_player, reason) 
-       VALUES (?, 'unmute', ?, 'Unmuted')`,
-      [req.moderator.id, playerName]
-    )
-
     // Poslat akci na Minecraft server přes WebSocket
     sendToMinecraft({
       action: 'unmute',
@@ -499,13 +490,12 @@ app.post('/api/mod/unmute', authenticateModerator, requirePermission('unmute'), 
 // GET /api/roles - Seznam všech rolí
 app.get('/api/roles', authenticateModerator, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, name, permissions, created_at FROM roles ORDER BY name ASC')
+    const [rows] = await pool.query('SELECT id, name, permissions FROM roles ORDER BY name ASC')
     
     const roles = rows.map(r => ({
       id: r.id,
       name: r.name,
       permissions: typeof r.permissions === 'string' ? JSON.parse(r.permissions) : r.permissions,
-      createdAt: r.created_at
     }))
 
     res.json(roles)
@@ -586,9 +576,120 @@ app.delete('/api/roles/:id', authenticateModerator, requirePermission('manageRol
 app.get('/api/moderators', authenticateModerator, requirePermission('manageRoles'), async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, username, created_at, is_active FROM moderators ORDER BY username ASC'
+      'SELECT id, username, is_active, roles FROM moderators ORDER BY username ASC'
     )
-    res.json(rows)
+    res.json(rows.map((row) => ({
+      ...row,
+      roles: parseModeratorRoles(row.roles),
+    })))
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// POST /api/moderators - Vytvoření nového moderátora
+app.post('/api/moderators', authenticateModerator, requirePermission('manageRoles'), async (req, res) => {
+  const { username, password } = req.body
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' })
+  }
+
+  if (username.length < 3 || username.length > 50) {
+    return res.status(400).json({ error: 'Username must be between 3 and 50 characters' })
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' })
+  }
+
+  try {
+    // Check if username already exists
+    const [existing] = await pool.query(
+      'SELECT id FROM moderators WHERE username = ?',
+      [username]
+    )
+    
+    if (Array.isArray(existing) && existing.length > 0) {
+      return res.status(409).json({ error: 'Username already exists' })
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10)
+
+    // Create moderator
+    const [result] = await pool.query(
+      'INSERT INTO moderators (username, password_hash, is_active, roles) VALUES (?, ?, ?, ?)',
+      [username, passwordHash, true, JSON.stringify([])]
+    )
+
+    res.status(201).json({
+      id: result.insertId,
+      username,
+      is_active: true,
+      roles: [],
+    })
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// PUT /api/moderators/:id - Aktualizace moderátora
+app.put('/api/moderators/:id', authenticateModerator, requirePermission('manageRoles'), async (req, res) => {
+  const { id } = req.params
+  const { is_active, password } = req.body
+
+  try {
+    if (is_active !== undefined) {
+      await pool.query(
+        'UPDATE moderators SET is_active = ? WHERE id = ?',
+        [is_active, id]
+      )
+    }
+
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' })
+      }
+      const passwordHash = await bcrypt.hash(password, 10)
+      await pool.query(
+        'UPDATE moderators SET password_hash = ? WHERE id = ?',
+        [passwordHash, id]
+      )
+    }
+
+    const [rows] = await pool.query(
+      'SELECT id, username, is_active, roles FROM moderators WHERE id = ?',
+      [id]
+    )
+
+    const moderator = Array.isArray(rows) ? rows[0] : null
+    if (!moderator) {
+      return res.status(404).json({ error: 'Moderator not found' })
+    }
+
+    res.json({
+      ...moderator,
+      roles: parseModeratorRoles(moderator.roles),
+    })
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// DELETE /api/moderators/:id - Smazání moderátora
+app.delete('/api/moderators/:id', authenticateModerator, requirePermission('manageRoles'), async (req, res) => {
+  const { id } = req.params
+
+  try {
+    if (Number(id) === req.moderator.id) {
+      return res.status(403).json({ error: 'Cannot delete your own account' })
+    }
+
+    // Delete moderator
+    await pool.query('DELETE FROM moderators WHERE id = ?', [id])
+
+    res.json({ success: true, message: 'Moderator deleted' })
   } catch (e) {
     res.status(500).json({ error: String(e?.message || e) })
   }
@@ -599,11 +700,24 @@ app.get('/api/moderators/:id/roles', authenticateModerator, requirePermission('m
   const { id } = req.params
 
   try {
-    const [rows] = await pool.query(
-      `SELECT r.id, r.name, r.permissions FROM roles r
-       INNER JOIN moderator_roles mr ON r.id = mr.role_id
-       WHERE mr.moderator_id = ?`,
+    const [modRows] = await pool.query(
+      'SELECT roles FROM moderators WHERE id = ? LIMIT 1',
       [id]
+    )
+    const moderator = Array.isArray(modRows) ? modRows[0] : null
+    if (!moderator) {
+      return res.status(404).json({ error: 'Moderator not found' })
+    }
+
+    const roleIds = parseModeratorRoles(moderator.roles)
+    if (!roleIds.length) {
+      return res.json([])
+    }
+
+    const placeholders = roleIds.map(() => '?').join(',')
+    const [rows] = await pool.query(
+      `SELECT id, name, permissions FROM roles WHERE id IN (${placeholders})`,
+      roleIds
     )
 
     const roles = rows.map(r => ({
@@ -628,10 +742,23 @@ app.post('/api/moderators/:id/roles', authenticateModerator, requirePermission('
   }
 
   try {
-    await pool.query(
-      'INSERT INTO moderator_roles (moderator_id, role_id) VALUES (?, ?)',
-      [id, roleId]
-    )
+    const [roleRows] = await pool.query('SELECT id FROM roles WHERE id = ? LIMIT 1', [roleId])
+    if (!Array.isArray(roleRows) || roleRows.length === 0) {
+      return res.status(404).json({ error: 'Role not found' })
+    }
+
+    const [modRows] = await pool.query('SELECT roles FROM moderators WHERE id = ? LIMIT 1', [id])
+    const moderator = Array.isArray(modRows) ? modRows[0] : null
+    if (!moderator) {
+      return res.status(404).json({ error: 'Moderator not found' })
+    }
+
+    const roleIds = parseModeratorRoles(moderator.roles)
+    const normalizedRoleId = Number(roleId)
+    if (!roleIds.includes(normalizedRoleId)) {
+      roleIds.push(normalizedRoleId)
+      await pool.query('UPDATE moderators SET roles = ? WHERE id = ?', [JSON.stringify(roleIds), id])
+    }
 
     res.json({ success: true, message: 'Role assigned' })
   } catch (e) {
@@ -644,10 +771,17 @@ app.delete('/api/moderators/:id/roles/:roleId', authenticateModerator, requirePe
   const { id, roleId } = req.params
 
   try {
-    await pool.query(
-      'DELETE FROM moderator_roles WHERE moderator_id = ? AND role_id = ?',
-      [id, roleId]
-    )
+    const [modRows] = await pool.query('SELECT roles FROM moderators WHERE id = ? LIMIT 1', [id])
+    const moderator = Array.isArray(modRows) ? modRows[0] : null
+    if (!moderator) {
+      return res.status(404).json({ error: 'Moderator not found' })
+    }
+
+    const roleIds = parseModeratorRoles(moderator.roles)
+    const normalizedRoleId = Number(roleId)
+    const filteredRoleIds = roleIds.filter((value) => value !== normalizedRoleId)
+
+    await pool.query('UPDATE moderators SET roles = ? WHERE id = ?', [JSON.stringify(filteredRoleIds), id])
 
     res.json({ success: true, message: 'Role removed' })
   } catch (e) {
@@ -659,10 +793,17 @@ app.delete('/api/moderators/:id/roles/:roleId', authenticateModerator, requirePe
 app.get('/api/mod/actions', authenticateModerator, requirePermission('viewActions'), async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT ma.*, m.username as moderator_username 
-       FROM mod_actions ma
-       INNER JOIN moderators m ON ma.moderator_id = m.id
-       ORDER BY ma.timestamp DESC
+      `SELECT
+         id,
+         0 AS moderator_id,
+         COALESCE(operator, 'CONSOLE') AS moderator_username,
+         punishmentType AS action_type,
+         player_name AS target_player,
+         reason,
+         duration,
+         start AS timestamp
+       FROM punishments
+       ORDER BY start DESC
        LIMIT 100`
     )
 
@@ -671,11 +812,6 @@ app.get('/api/mod/actions', authenticateModerator, requirePermission('viewAction
     res.status(500).json({ error: String(e?.message || e) })
   }
 })
-
-// ========================================
-// EXISTING ENDPOINTS
-// ========================================
-
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -929,10 +1065,19 @@ app.get('*', (req, res, next) => {
   })
 })
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`API server listening on http://localhost:${PORT}`)
-  
-  // Připojit se k Minecraft WebSocket serveru
-  connectToMinecraft()
-})
+async function startServer() {
+  try {
+    app.listen(PORT, () => {
+      // eslint-disable-next-line no-console
+      console.log(`API server listening on http://localhost:${PORT}`)
+
+      // Připojit se k Minecraft WebSocket serveru
+      connectToMinecraft()
+    })
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    process.exit(1)
+  }
+}
+
+startServer()

@@ -5,7 +5,7 @@ SolaceCore is a Paper/Bukkit moderation plugin (kick, ban, tempban, mute, tempmu
 – Plugin: `Plugin/SolaceCore` (Java 21, Maven, Paper 1.21.x)
 – Web: `WEB/SolaceCore` (Node 20, Vite + React, Express API)
 
-Language: English | Čeština (see `README.md`)
+Language: English | Čeština (see `README.cs.md`)
 
 
 ## Features
@@ -80,7 +80,7 @@ cd server
 ./start_server.bat
 ```
 
-On first launch, the plugin automatically creates tables `players`, `punishments`, and `operators`.
+On first launch, the plugin automatically creates tables `players`, `punishments`, `moderators`, and `roles`.
 
 
 ## Commands and permissions
@@ -175,14 +175,67 @@ ENABLE_CORS=0
 Note: The API expects the plugin to maintain the DB schema and data. The schema is created by the plugin at startup.
 
 
-## Database (managed by the plugin)
+## ERD and database
 
-The plugin creates on startup:
-- `players(name, uuid, ipAddress, lastLogin, …)`
-- `punishments(id, player_name, reason, operator, punishmentType, start, end, duration, isActive, …)`
-- `operators(id, role)`
+The current data model uses 4 main tables: `players`, `punishments`, `moderators`, `roles`.
 
-Relation: `punishments.player_name` -> `players.name` (FK, CASCADE).
+### `players`
+
+- `name` `VARCHAR(16)` `NOT NULL` `PRIMARY KEY`
+- `uuid` `VARCHAR(36)` `UNIQUE` `NULL`
+- `ipAddress` `VARCHAR(45)` `NULL`
+- `lastLogin` `DATETIME` `NULL`
+
+Indexes:
+- `INDEX (uuid)`
+- `INDEX (ipAddress)`
+
+### `punishments`
+
+- `id` `INT` `NOT NULL` `AUTO_INCREMENT` `PRIMARY KEY`
+- `player_name` `VARCHAR(16)` `NOT NULL`
+- `reason` `VARCHAR(255)` `NULL`
+- `operator` `VARCHAR(16)` `NULL`
+- `punishmentType` `VARCHAR(16)` `NULL`
+- `start` `DATETIME` `NULL`
+- `end` `DATETIME` `NULL`
+- `duration` `BIGINT` `NULL` (in seconds)
+- `isActive` `BOOLEAN` `NULL`
+
+Indexes:
+- `INDEX (player_name)`
+
+FK:
+- `fk_punishments_player_name`: `punishments.player_name` -> `players.name`
+  - `ON DELETE CASCADE`
+  - `ON UPDATE CASCADE`
+
+### `moderators`
+
+- `id` `INT` `AUTO_INCREMENT` `PRIMARY KEY`
+- `username` `VARCHAR(50)` `UNIQUE` `NOT NULL`
+- `password_hash` `VARCHAR(255)` `NOT NULL`
+- `roles` `JSON` `NULL` (array of role IDs, e.g. `[1,2]`)
+- `is_active` `BOOLEAN` `DEFAULT TRUE`
+
+Indexes:
+- `INDEX idx_username (username)`
+
+### `roles`
+
+- `id` `INT` `AUTO_INCREMENT` `PRIMARY KEY`
+- `name` `VARCHAR(50)` `UNIQUE` `NOT NULL`
+- `permissions` `JSON` `NOT NULL` (e.g. `{"ban": true, "kick": true}`)
+
+Indexes:
+- `INDEX idx_name (name)`
+
+## Table relationships
+
+- Physical FK relationship in DB:
+  - `players (1)` -> `punishments (N)` via `punishments.player_name`
+- Logical relationship (without FK constraint):
+  - `moderators.roles` (JSON array) contains IDs from `roles.id`
 
 
 ## Tips and compatibility

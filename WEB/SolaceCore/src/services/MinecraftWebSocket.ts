@@ -18,7 +18,7 @@ export class MinecraftWebSocket {
   private getWebSocketUrl(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.hostname
-    const port = import.meta.env.VITE_MINECRAFT_WS_PORT || '8082'
+    const port = import.meta.env.VITE_MINECRAFT_WS_PORT || '8080'
     return `${protocol}//${host}:${port}`
   }
 

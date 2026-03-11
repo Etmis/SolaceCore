@@ -78,7 +78,7 @@ cd server
 ./start_server.bat
 ```
 
-Při prvním startu plugin automaticky vytvoří tabulky `players`, `punishments` a `operators`.
+Při prvním startu plugin automaticky vytvoří tabulky `players`, `punishments`, `moderators` a `roles`.
 
 
 ## Příkazy a oprávnění
@@ -173,14 +173,67 @@ ENABLE_CORS=0
 Pozn.: API očekává, že plugin udržuje tabulky a data v DB. Schéma je tvořeno pluginem při startu.
 
 
-## Databáze (automaticky spravovaná pluginem)
+## ERD a databáze
 
-Plugin při startu zajistí tabulky:
-- `players(name, uuid, ipAddress, lastLogin, …)`
-- `punishments(id, player_name, reason, operator, punishmentType, start, end, duration, isActive, …)`
-- `operators(id, role)`
+Aktuální datový model používá 4 hlavní tabulky: `players`, `punishments`, `moderators`, `roles`.
 
-Relace: `punishments.player_name` -> `players.name` (FK, CASCADE).
+### `players`
+
+- `name` `VARCHAR(16)` `NOT NULL` `PRIMARY KEY`
+- `uuid` `VARCHAR(36)` `UNIQUE` `NULL`
+- `ipAddress` `VARCHAR(45)` `NULL`
+- `lastLogin` `DATETIME` `NULL`
+
+Indexy:
+- `INDEX (uuid)`
+- `INDEX (ipAddress)`
+
+### `punishments`
+
+- `id` `INT` `NOT NULL` `AUTO_INCREMENT` `PRIMARY KEY`
+- `player_name` `VARCHAR(16)` `NOT NULL`
+- `reason` `VARCHAR(255)` `NULL`
+- `operator` `VARCHAR(16)` `NULL`
+- `punishmentType` `VARCHAR(16)` `NULL`
+- `start` `DATETIME` `NULL`
+- `end` `DATETIME` `NULL`
+- `duration` `BIGINT` `NULL` (v sekundách)
+- `isActive` `BOOLEAN` `NULL`
+
+Indexy:
+- `INDEX (player_name)`
+
+FK:
+- `fk_punishments_player_name`: `punishments.player_name` -> `players.name`
+  - `ON DELETE CASCADE`
+  - `ON UPDATE CASCADE`
+
+### `moderators`
+
+- `id` `INT` `AUTO_INCREMENT` `PRIMARY KEY`
+- `username` `VARCHAR(50)` `UNIQUE` `NOT NULL`
+- `password_hash` `VARCHAR(255)` `NOT NULL`
+- `roles` `JSON` `NULL` (pole ID rolí, např. `[1,2]`)
+- `is_active` `BOOLEAN` `DEFAULT TRUE`
+
+Indexy:
+- `INDEX idx_username (username)`
+
+### `roles`
+
+- `id` `INT` `AUTO_INCREMENT` `PRIMARY KEY`
+- `name` `VARCHAR(50)` `UNIQUE` `NOT NULL`
+- `permissions` `JSON` `NOT NULL` (např. `{"ban": true, "kick": true}`)
+
+Indexy:
+- `INDEX idx_name (name)`
+
+## Vazby mezi tabulkami
+
+- Fyzická FK vazba v DB:
+  - `players (1)` -> `punishments (N)` přes `punishments.player_name`
+- Logická vazba (bez FK constraintu):
+  - `moderators.roles` (JSON pole) obsahuje ID z `roles.id`
 
 
 ## Tipy a kompatibilita

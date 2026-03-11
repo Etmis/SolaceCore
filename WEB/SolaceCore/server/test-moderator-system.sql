@@ -1,32 +1,31 @@
 -- Testovací skript pro ověření moderátorského systému
 
 -- 1. Zobrazit všechny moderátory
-SELECT id, username, is_active, created_at FROM moderators;
+SELECT id, username, is_active, roles FROM moderators;
 
 -- 2. Zobrazit všechny role
 SELECT id, name, permissions FROM roles;
 
--- 3. Zobrazit přiřazení rolí moderátorům
+-- 3. Zobrazit přiřazení rolí moderátorům (z JSON pole moderators.roles)
 SELECT 
     m.username,
-    r.name as role_name,
-    mr.assigned_at
-FROM moderator_roles mr
-JOIN moderators m ON mr.moderator_id = m.id
-JOIN roles r ON mr.role_id = r.id
-ORDER BY m.username, r.name;
+    m.roles,
+    GROUP_CONCAT(r.name ORDER BY r.name SEPARATOR ', ') AS role_names
+FROM moderators m
+LEFT JOIN roles r ON JSON_CONTAINS(m.roles, CAST(r.id AS JSON), '$')
+GROUP BY m.id, m.username, m.roles
+ORDER BY m.username;
 
--- 4. Zobrazit poslední moderátorské akce
+-- 4. Zobrazit poslední moderátorské akce (odvozeno z punishments)
 SELECT 
-    ma.id,
-    m.username as moderator,
-    ma.action_type,
-    ma.target_player,
-    ma.reason,
-    ma.timestamp
-FROM mod_actions ma
-JOIN moderators m ON ma.moderator_id = m.id
-ORDER BY ma.timestamp DESC
+    p.id,
+    COALESCE(p.operator, 'CONSOLE') AS moderator,
+    p.punishmentType AS action_type,
+    p.player_name AS target_player,
+    p.reason,
+    p.start AS timestamp
+FROM punishments p
+ORDER BY p.start DESC
 LIMIT 20;
 
 -- 5. Zobrazit aktivní tresty
@@ -46,10 +45,11 @@ ORDER BY p.start DESC;
 -- 6. Přidat nového moderátora (změňte username a použijte hash z generate-password.js)
 -- INSERT INTO moderators (username, password_hash) VALUES ('newmod', 'HASH_HERE');
 
--- 7. Přiřadit roli moderátorovi
--- INSERT INTO moderator_roles (moderator_id, role_id) 
--- VALUES ((SELECT id FROM moderators WHERE username = 'newmod'), 
---         (SELECT id FROM roles WHERE name = 'Moderator'));
+-- 7. Přiřadit roli moderátorovi (přidejte role ID do JSON pole)
+-- UPDATE moderators m
+-- JOIN roles r ON r.name = 'Moderator'
+-- SET m.roles = JSON_ARRAY_APPEND(COALESCE(m.roles, JSON_ARRAY()), '$', r.id)
+-- WHERE m.username = 'newmod' AND NOT JSON_CONTAINS(COALESCE(m.roles, JSON_ARRAY()), CAST(r.id AS JSON), '$');
 
 -- 8. Vytvořit vlastní roli
 -- INSERT INTO roles (name, permissions) VALUES 

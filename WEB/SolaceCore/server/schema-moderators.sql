@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS moderators (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  roles JSON NULL COMMENT 'Array of role IDs',
   is_active BOOLEAN DEFAULT TRUE,
   INDEX idx_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -13,34 +13,11 @@ CREATE TABLE IF NOT EXISTS roles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(50) UNIQUE NOT NULL,
   permissions JSON NOT NULL COMMENT 'JSON objekt s oprávněními: {"ban": true, "unban": true, "warn": true, "kick": true, "manageRoles": true}',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabulka pro přiřazení rolí moderátorům (M:N vztah)
-CREATE TABLE IF NOT EXISTS moderator_roles (
-  moderator_id INT NOT NULL,
-  role_id INT NOT NULL,
-  assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (moderator_id, role_id),
-  FOREIGN KEY (moderator_id) REFERENCES moderators(id) ON DELETE CASCADE,
-  FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabulka pro zaznamenání moderátorských akcí
-CREATE TABLE IF NOT EXISTS mod_actions (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  moderator_id INT NOT NULL,
-  action_type ENUM('ban', 'tempban', 'unban', 'warn', 'kick', 'mute', 'unmute') NOT NULL,
-  target_player VARCHAR(50) NOT NULL,
-  reason TEXT,
-  duration BIGINT NULL COMMENT 'Trvání v milisekundách (pro tempban, tempmute)',
-  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (moderator_id) REFERENCES moderators(id) ON DELETE CASCADE,
-  INDEX idx_moderator (moderator_id),
-  INDEX idx_target (target_player),
-  INDEX idx_timestamp (timestamp)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS moderator_roles;
+DROP TABLE IF EXISTS mod_actions;
 
 -- Výchozí role pro administrátory (všechna oprávnění)
 INSERT INTO roles (name, permissions) VALUES 
@@ -55,8 +32,8 @@ INSERT INTO moderators (username, password_hash) VALUES
 ('admin', '$2a$10$5CV47OmyVDWdXzdD.TrMxO4b3s//1v3XKEnxxb.cfk5vrlIgDQMZa')
 ON DUPLICATE KEY UPDATE username=username;
 
--- Přiřadit Admin roli testovacímu moderátorovi
-INSERT INTO moderator_roles (moderator_id, role_id)
-SELECT m.id, r.id FROM moderators m, roles r 
-WHERE m.username = 'admin' AND r.name = 'Admin'
-ON DUPLICATE KEY UPDATE moderator_id=moderator_id;
+-- Přiřadit Admin roli testovacímu moderátorovi do JSON pole moderators.roles
+UPDATE moderators m
+JOIN roles r ON r.name = 'Admin'
+SET m.roles = JSON_ARRAY(r.id)
+WHERE m.username = 'admin' AND (m.roles IS NULL OR JSON_LENGTH(m.roles) = 0);

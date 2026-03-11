@@ -43,7 +43,6 @@ export type Role = {
   id: number
   name: string
   permissions: Record<string, boolean>
-  createdAt?: string
 }
 
 export type ModAction = {
