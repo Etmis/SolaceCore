@@ -6,7 +6,7 @@
 
     <groupId>com.etmisthefox</groupId>
     <artifactId>SolaceCore</artifactId>
-    <version>Alpha_v1.0.0</version>
+    <version>Alpha-v1.0.0</version>
     <packaging>jar</packaging>
 
     <name>SolaceCore</name>

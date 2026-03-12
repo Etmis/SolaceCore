@@ -23,8 +23,7 @@ export default function RoleManagement() {
     kick: false,
     mute: false,
     unmute: false,
-    manageRoles: false,
-    viewActions: false
+    manageRoles: false
   })
 
   useEffect(() => {
@@ -72,8 +71,7 @@ export default function RoleManagement() {
         kick: false,
         mute: false,
         unmute: false,
-        manageRoles: false,
-        viewActions: false
+        manageRoles: false
       })
       loadData()
     } catch (err: any) {

@@ -790,7 +790,7 @@ app.delete('/api/moderators/:id/roles/:roleId', authenticateModerator, requirePe
 })
 
 // GET /api/mod/actions - Historie moderátorských akcí
-app.get('/api/mod/actions', authenticateModerator, requirePermission('viewActions'), async (req, res) => {
+app.get('/api/mod/actions', authenticateModerator, async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT

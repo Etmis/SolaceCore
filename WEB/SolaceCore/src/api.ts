@@ -23,7 +23,9 @@ async function get<T>(path: string, withAuth = false): Promise<T> {
   const res = await fetch(resolvePath(path), { headers })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(text || `HTTP ${res.status}`)
+    let message = text || `HTTP ${res.status}`
+    try { const json = JSON.parse(text); if (json.error) message = json.error } catch {}
+    throw new Error(message)
   }
   return res.json() as Promise<T>
 }
@@ -49,7 +51,9 @@ async function post<T>(path: string, body: any, withAuth = false): Promise<T> {
   
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(text || `HTTP ${res.status}`)
+    let message = text || `HTTP ${res.status}`
+    try { const json = JSON.parse(text); if (json.error) message = json.error } catch {}
+    throw new Error(message)
   }
   return res.json() as Promise<T>
 }
@@ -75,7 +79,9 @@ async function put<T>(path: string, body: any, withAuth = false): Promise<T> {
   
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(text || `HTTP ${res.status}`)
+    let message = text || `HTTP ${res.status}`
+    try { const json = JSON.parse(text); if (json.error) message = json.error } catch {}
+    throw new Error(message)
   }
   return res.json() as Promise<T>
 }
@@ -97,7 +103,9 @@ async function del<T>(path: string, withAuth = false): Promise<T> {
   
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(text || `HTTP ${res.status}`)
+    let message = text || `HTTP ${res.status}`
+    try { const json = JSON.parse(text); if (json.error) message = json.error } catch {}
+    throw new Error(message)
   }
   return res.json() as Promise<T>
 }

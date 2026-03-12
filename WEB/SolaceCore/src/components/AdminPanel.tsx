@@ -40,8 +40,7 @@ export default function AdminPanel() {
     kick: false,
     mute: false,
     unmute: false,
-    manageRoles: false,
-    viewActions: false
+    manageRoles: false
   })
   
   const [loading, setLoading] = useState(true)
@@ -188,8 +187,7 @@ export default function AdminPanel() {
         kick: false,
         mute: false,
         unmute: false,
-        manageRoles: false,
-        viewActions: false
+        manageRoles: false
       })
       loadData()
       setSuccess('Role created successfully')
@@ -461,8 +459,7 @@ export default function AdminPanel() {
                   kick: false,
                   mute: false,
                   unmute: false,
-                  manageRoles: false,
-                  viewActions: false
+                  manageRoles: false
                 })
               }}
             >
