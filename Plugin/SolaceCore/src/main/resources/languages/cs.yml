@@ -29,6 +29,7 @@ punishment:
   warn_success: "Hráč {player} byl varován. Důvod: {reason}"
   kick_protection: "Hráč {player} nemůže být vykopnut, protože má ochranu před vykopnutím"
   ban_protection: "Hráč {player} nemůže být zabanován, protože má ochranu před banem"
+  mute_protection: "Hráč {player} nemůže být ztlumen, protože má ochranu před ztlumením"
   warn_protection: "Hráč {player} nemůže být varován, protože má ochranu před varováním"
 broadcast:
   player_kicked: "{player} byl vykopnut. Důvod: {reason}"
@@ -44,6 +45,7 @@ player_messages:
   kicked: "Byl jsi vykopnut!"
   banned: "Byl jsi permanentně zabanován!"
   tempbanned: "Byl jsi dočasně zabanován!"
+  tempipban: "Na tomto serveru jsi dočasně zabanovaný podle IP!"
   muted: "Byl jsi ztlumen! Důvod: {reason}. Ztlumil: {operator}"
   tempmuted: "Byl jsi dočasně ztlumen na {time}! Důvod: {reason}. Ztlumil: {operator}"
   unmuted: "Tvůj mute byl zrušen! Můžeš znovu psát. Odztlumil: {operator}"

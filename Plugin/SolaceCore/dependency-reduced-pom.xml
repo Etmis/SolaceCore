@@ -4,7 +4,7 @@
   <groupId>com.etmisthefox</groupId>
   <artifactId>SolaceCore</artifactId>
   <name>SolaceCore</name>
-  <version>1.0.0</version>
+  <version>Alpha_v1.0.0</version>
   <build>
     <defaultGoal>clean package</defaultGoal>
     <resources>
