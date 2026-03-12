@@ -63,7 +63,7 @@ public final class WarnsCommand implements CommandExecutor {
                 .collect(Collectors.toList());
 
         if (warnings.isEmpty()) {
-            sender.sendMessage(Component.text("No warnings found for " + targetName + ".", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text(lang.getMessage("warns.none", "player", targetName), NamedTextColor.GRAY));
             return true;
         }
 
@@ -78,7 +78,12 @@ public final class WarnsCommand implements CommandExecutor {
         List<Punishment> pageItems = PaginationUtil.pageItems(warnings, info);
 
         // Header using util
-        Component header = PaginationUtil.buildHeader("Warnings for ", targetName, info);
+        Component header = PaginationUtil.buildHeader(
+                lang.getMessage("warns.header_prefix"),
+                targetName,
+                info,
+                lang.getMessage("warns.page_label")
+        );
         sender.sendMessage(header);
 
         // Lines
@@ -89,16 +94,21 @@ public final class WarnsCommand implements CommandExecutor {
             String startStr = start != null ? DATE_FMT.format(start) : "-";
 
             Component line = Component.text(reason, NamedTextColor.WHITE)
-                    .append(Component.text(" | by ", NamedTextColor.DARK_GRAY))
+                    .append(Component.text(lang.getMessage("warns.separator_by"), NamedTextColor.DARK_GRAY))
                     .append(Component.text(operator, NamedTextColor.YELLOW))
-                    .append(Component.text(" | at ", NamedTextColor.DARK_GRAY))
+                    .append(Component.text(lang.getMessage("warns.separator_at"), NamedTextColor.DARK_GRAY))
                     .append(Component.text(startStr, NamedTextColor.AQUA));
 
             sender.sendMessage(line);
         }
 
         // Footer navigation via util
-        Component footer = PaginationUtil.buildFooter(info, p -> "/" + label + " " + targetName + " " + p);
+        Component footer = PaginationUtil.buildFooter(
+                info,
+                p -> "/" + label + " " + targetName + " " + p,
+                lang.getMessage("warns.previous_page"),
+                lang.getMessage("warns.next_page")
+        );
         if (!footer.equals(Component.empty())) {
             sender.sendMessage(footer);
         }

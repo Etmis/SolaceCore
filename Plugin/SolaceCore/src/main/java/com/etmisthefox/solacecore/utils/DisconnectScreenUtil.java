@@ -1,5 +1,6 @@
 package com.etmisthefox.solacecore.utils;
 
+import com.etmisthefox.solacecore.managers.LanguageManager;
 import cz.foresttech.api.ColorAPI;
 import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.ConfigurationSection;
@@ -10,34 +11,36 @@ import java.util.Map;
 public final class DisconnectScreenUtil {
 
     private static FileConfiguration fileConfiguration;
+    private static LanguageManager languageManager;
 
-    public static void init(FileConfiguration fc) {
+    public static void init(FileConfiguration fc, LanguageManager lang) {
         fileConfiguration = fc;
+        languageManager = lang;
     }
 
     public static Component formatDisconnectScreen(boolean kick, String punishmentMessage, String reason, String operator, String time) {
         Component component = Component.text(ColorAPI.colorize("&6&l[SolaceCore] &8&l>> &7") + punishmentMessage)
                 .append(Component.newline())
                 .append(Component.newline())
-                .append(Component.text(ColorAPI.colorize("&6Reason &8&l>> &7") + reason));
+                .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.reason_label") + " &8&l>> &7") + reason));
         if (time != null) {
             if (kick) {
                 component = component
                         .append(Component.newline())
                         .append(Component.newline())
-                        .append(Component.text(ColorAPI.colorize("&6Duration &8&l>> &7") + time));
+                        .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.duration_label") + " &8&l>> &7") + time));
             }
             else {
                 component = component
                         .append(Component.newline())
                         .append(Component.newline())
-                        .append(Component.text(ColorAPI.colorize("&6Remaining &8&l>> &7") + time));
+                        .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.remaining_label") + " &8&l>> &7") + time));
             }
         }
         component = component
                 .append(Component.newline())
                 .append(Component.newline())
-                .append(Component.text(ColorAPI.colorize("&6Issued by &8&l>> &7" + operator)));
+                .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.issued_by_label") + " &8&l>> &7" + operator)));
 
         ConfigurationSection section = fileConfiguration.getConfigurationSection("appeal_url");
         if (section != null) {

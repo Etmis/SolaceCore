@@ -1,5 +1,6 @@
 package com.etmisthefox.solacecore.websocket;
 
+import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.java_websocket.WebSocket;
@@ -14,14 +15,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ModeratorWebSocketServer extends WebSocketServer {
 
     private final JavaPlugin plugin;
+    private final LanguageManager lang;
     private final Gson gson = new Gson();
     private final List<WebSocket> connections = new CopyOnWriteArrayList<>();
     private final ModCommandHandler commandHandler;
 
-    public ModeratorWebSocketServer(int port, JavaPlugin plugin, ModCommandHandler commandHandler) {
+    public ModeratorWebSocketServer(int port, JavaPlugin plugin, ModCommandHandler commandHandler, LanguageManager lang) {
         super(new InetSocketAddress(port));
         this.plugin = plugin;
         this.commandHandler = commandHandler;
+        this.lang = lang;
     }
 
     @Override
@@ -34,7 +37,7 @@ public class ModeratorWebSocketServer extends WebSocketServer {
         // Potvrzení připojení
         JsonObject response = new JsonObject();
         response.addProperty("type", "connected");
-        response.addProperty("message", "Connected to Minecraft server");
+        response.addProperty("message", lang.getMessage("websocket.connected"));
         response.addProperty("version", "1.0");
         response.addProperty("timestamp", System.currentTimeMillis());
         conn.send(gson.toJson(response));
@@ -60,7 +63,7 @@ public class ModeratorWebSocketServer extends WebSocketServer {
 
             if (action == null) {
                 plugin.getLogger().warning("❌ Missing action field in message");
-                sendError(conn, "Missing action field");
+                sendError(conn, lang.getMessage("websocket.error.missing_action"));
                 return;
             }
 
@@ -80,7 +83,7 @@ public class ModeratorWebSocketServer extends WebSocketServer {
         } catch (Exception e) {
             plugin.getLogger().severe("❌ Error processing WebSocket message: " + e.getMessage());
             e.printStackTrace();
-            sendError(conn, "Error processing request: " + e.getMessage());
+            sendError(conn, lang.getMessage("websocket.error.processing_request", "error", e.getMessage()));
         }
     }
 

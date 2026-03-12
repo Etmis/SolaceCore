@@ -48,18 +48,26 @@ public final class PaginationUtil {
     }
 
     public static Component buildHeader(String titlePrefix, String subject, PageInfo info) {
+        return buildHeader(titlePrefix, subject, info, "Page");
+    }
+
+    public static Component buildHeader(String titlePrefix, String subject, PageInfo info, String pageLabel) {
         return Component.text(titlePrefix, NamedTextColor.GOLD)
                 .append(Component.text(subject, NamedTextColor.YELLOW, TextDecoration.BOLD))
                 .append(Component.text(" (", NamedTextColor.GOLD))
-                .append(Component.text("Page " + info.page + "/" + info.totalPages, NamedTextColor.AQUA))
+                .append(Component.text(pageLabel + " " + info.page + "/" + info.totalPages, NamedTextColor.AQUA))
                 .append(Component.text(")", NamedTextColor.GOLD));
     }
 
     public static Component buildFooter(PageInfo info, IntFunction<String> commandForPage) {
+        return buildFooter(info, commandForPage, "Previous page", "Next page");
+    }
+
+    public static Component buildFooter(PageInfo info, IntFunction<String> commandForPage, String previousPageLabel, String nextPageLabel) {
         Component footer = Component.empty();
         if (info.page > 1) {
             Component prev = Component.text("<<", NamedTextColor.YELLOW, TextDecoration.BOLD)
-                    .hoverEvent(HoverEvent.showText(Component.text("Previous page", NamedTextColor.GRAY)))
+                    .hoverEvent(HoverEvent.showText(Component.text(previousPageLabel, NamedTextColor.GRAY)))
                     .clickEvent(ClickEvent.runCommand(commandForPage.apply(info.page - 1)));
             footer = footer.append(prev);
         }
@@ -68,7 +76,7 @@ public final class PaginationUtil {
         }
         if (info.page < info.totalPages) {
             Component next = Component.text(">>", NamedTextColor.YELLOW, TextDecoration.BOLD)
-                    .hoverEvent(HoverEvent.showText(Component.text("Next page", NamedTextColor.GRAY)))
+                    .hoverEvent(HoverEvent.showText(Component.text(nextPageLabel, NamedTextColor.GRAY)))
                     .clickEvent(ClickEvent.runCommand(commandForPage.apply(info.page + 1)));
             footer = footer.append(next);
         }

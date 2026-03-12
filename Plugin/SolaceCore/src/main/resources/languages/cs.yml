@@ -66,6 +66,12 @@ login:
   banned_temp: "Na tomto serveru jsi dočasně zabanovaný. Důvod: {reason}. Ban udělil: {operator}. Zbývající čas: {remaining}"
 warns:
   none: "Žádné tresty pro hráče {player}."
+  header_prefix: "Varování pro "
+  page_label: "Strana"
+  separator_by: " | od "
+  separator_at: " | kdy "
+  previous_page: "Předchozí strana"
+  next_page: "Další strana"
 gui:
   common:
     active_tag: "[AKTIVNÍ]"
@@ -122,4 +128,85 @@ discord:
   player_not_found: "❌ Hráč **{player}** nebyl nalezen na serveru."
   invalid_duration: "❌ Neplatný formát doby. Použij: 10m, 1h, 2d."
   error: "❌ Chyba: {error}"
+  commands:
+    ban:
+      description: "Zabanuje hráče na serveru"
+    unban:
+      description: "Odbanuje hráče na serveru"
+    kick:
+      description: "Vykopne hráče ze serveru"
+    mute:
+      description: "Ztlumí hráče"
+    unmute:
+      description: "Odztlumí hráče"
+    warn:
+      description: "Varuje hráče"
+    tempban:
+      description: "Dočasně zabanuje hráče"
+    tempmute:
+      description: "Dočasně ztlumí hráče"
+    ipban:
+      description: "Zabanuje hráče podle IP"
+    tempipban:
+      description: "Dočasně zabanuje hráče podle IP"
+    option:
+      player: "Jméno hráče"
+      duration: "Doba (např. 7d, 24h, 30m)"
+      reason:
+        ban: "Důvod banu"
+        kick: "Důvod vykopnutí"
+        mute: "Důvod ztlumení"
+        warn: "Důvod varování"
+        ipban: "Důvod IP banu"
+  reply:
+    cannot_determine_user: "❌ Chyba: Nelze určit uživatele."
+    player_name_required: "❌ Je vyžadováno jméno hráče."
+    player_not_online: "❌ Hráč **{player}** není online."
+    ban_success: "✅ Hráč **{player}** byl zabanován."
+    unban_success: "✅ Hráč **{player}** byl odbanován."
+    kick_success: "✅ Hráč **{player}** byl vykopnut."
+    mute_success: "✅ Hráč **{player}** byl ztlumen."
+    unmute_success: "✅ Hráč **{player}** byl odztlumen."
+    warn_success: "✅ Hráč **{player}** byl varován."
+    tempban_success: "✅ Hráč **{player}** byl dočasně zabanován."
+    tempmute_success: "✅ Hráč **{player}** byl dočasně ztlumen."
+    ipban_success: "✅ Hráč **{player}** byl IP zabanován."
+    tempipban_success: "✅ Hráč **{player}** byl dočasně IP zabanován."
+    unknown_command: "❌ Neznámý příkaz: {command}"
+    database_error: "❌ Databázová chyba: {error}"
+  log:
+    operator: "Operátor"
+    player: "Hráč"
+    reason: "Důvod"
+    duration: "Doba"
+    time: "Čas"
+    na: "N/A"
+
+websocket:
+  connected: "Připojeno k Minecraft serveru"
+  success:
+    ban: "Hráč {player} byl zabanován"
+    tempban: "Hráč {player} byl dočasně zabanován"
+    unban: "Hráč {player} byl odbanován"
+    kick: "Hráč {player} byl vykopnut"
+    warn: "Hráč {player} byl varován"
+    mute: "Hráč {player} byl ztlumen"
+    unmute: "Hráč {player} byl odztlumen"
+  error:
+    missing_action: "Chybí pole action"
+    unknown_action: "Neznámá akce: {action}"
+    processing_request: "Chyba při zpracování požadavku: {error}"
+    executing_command: "Chyba při vykonávání příkazu: {error}"
+    player_name_required: "Jméno hráče je povinné"
+    player_not_online: "Hráč {player} není online"
+    player_not_banned: "Hráč {player} není zabanovaný"
+    player_not_muted: "Hráč {player} není ztlumený"
+    unban_failed: "Nepodařilo se odbanovat hráče: {error}"
+    unmute_failed: "Nepodařilo se odztlumit hráče: {error}"
+
+disconnect:
+  reason_label: "Důvod"
+  duration_label: "Doba"
+  remaining_label: "Zbývá"
+  issued_by_label: "Vydal"
 

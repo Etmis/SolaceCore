@@ -89,13 +89,13 @@ public final class DiscordManager {
     private String formatActionLog(String actionType, String operator, String targetPlayer, String reason, String duration) {
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(actionType).append("**\n");
-        sb.append("**Operator:** ").append(operator).append("\n");
-        sb.append("**Player:** ").append(targetPlayer).append("\n");
-        sb.append("**Reason:** ").append(reason != null ? reason : "N/A").append("\n");
+        sb.append("**").append(lang.getMessage("discord.log.operator")).append(":** ").append(operator).append("\n");
+        sb.append("**").append(lang.getMessage("discord.log.player")).append(":** ").append(targetPlayer).append("\n");
+        sb.append("**").append(lang.getMessage("discord.log.reason")).append(":** ").append(reason != null ? reason : lang.getMessage("discord.log.na")).append("\n");
         if (duration != null) {
-            sb.append("**Duration:** ").append(duration).append("\n");
+            sb.append("**").append(lang.getMessage("discord.log.duration")).append(":** ").append(duration).append("\n");
         }
-        sb.append("**Time:** <t:").append(System.currentTimeMillis() / 1000).append(":R>\n");
+        sb.append("**").append(lang.getMessage("discord.log.time")).append(":** <t:").append(System.currentTimeMillis() / 1000).append(":R>\n");
         return sb.toString();
     }
 

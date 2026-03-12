@@ -29,9 +29,8 @@ public final class SolaceCore extends JavaPlugin {
         InventoryManager inventoryManager = new InventoryManager(this);
         inventoryManager.init();
 
-        DisconnectScreenUtil.init(getConfig());
-
         lang = new LanguageManager(this, getConfig().getString("language", "en"));
+        DisconnectScreenUtil.init(getConfig(), lang);
 
         database = new Database(this);
         try {
@@ -52,7 +51,7 @@ public final class SolaceCore extends JavaPlugin {
         getLogger().info("=======================================================");
 
         ModCommandHandler commandHandler = new ModCommandHandler(database, lang, this);
-        wsServer = new ModeratorWebSocketServer(wsPort, this, commandHandler);
+        wsServer = new ModeratorWebSocketServer(wsPort, this, commandHandler, lang);
         try {
             wsServer.start();
             getLogger().info("WebSocket server STARTED on port " + wsPort);

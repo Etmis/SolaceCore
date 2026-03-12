@@ -67,6 +67,14 @@ chat:
 login:
   banned_permanent: "You are permanently banned on this server. Reason: {reason}. Banned by: {operator}"
   banned_temp: "You are temporarily banned on this server. Reason: {reason}. Banned by: {operator}. Remaining time: {remaining}"
+warns:
+  none: "No warnings found for {player}."
+  header_prefix: "Warnings for "
+  page_label: "Page"
+  separator_by: " | by "
+  separator_at: " | at "
+  previous_page: "Previous page"
+  next_page: "Next page"
 gui:
   common:
     active_tag: "[ACTIVE]"
@@ -123,4 +131,85 @@ discord:
   player_not_found: "❌ Player **{player}** not found on server."
   invalid_duration: "❌ Invalid duration format. Use: 10m, 1h, 2d."
   error: "❌ Error: {error}"
+  commands:
+    ban:
+      description: "Ban a player from the server"
+    unban:
+      description: "Unban a player from the server"
+    kick:
+      description: "Kick a player from the server"
+    mute:
+      description: "Mute a player"
+    unmute:
+      description: "Unmute a player"
+    warn:
+      description: "Warn a player"
+    tempban:
+      description: "Temporarily ban a player"
+    tempmute:
+      description: "Temporarily mute a player"
+    ipban:
+      description: "IP ban a player"
+    tempipban:
+      description: "Temporarily IP ban a player"
+    option:
+      player: "Player name"
+      duration: "Duration (e.g., 7d, 24h, 30m)"
+      reason:
+        ban: "Reason for ban"
+        kick: "Reason for kick"
+        mute: "Reason for mute"
+        warn: "Reason for warning"
+        ipban: "Reason for IP ban"
+  reply:
+    cannot_determine_user: "❌ Error: Cannot determine user."
+    player_name_required: "❌ Player name is required."
+    player_not_online: "❌ Player **{player}** is not online."
+    ban_success: "✅ Player **{player}** has been banned."
+    unban_success: "✅ Player **{player}** has been unbanned."
+    kick_success: "✅ Player **{player}** has been kicked."
+    mute_success: "✅ Player **{player}** has been muted."
+    unmute_success: "✅ Player **{player}** has been unmuted."
+    warn_success: "✅ Player **{player}** has been warned."
+    tempban_success: "✅ Player **{player}** has been temporarily banned."
+    tempmute_success: "✅ Player **{player}** has been temporarily muted."
+    ipban_success: "✅ Player **{player}** has been IP banned."
+    tempipban_success: "✅ Player **{player}** has been temporarily IP banned."
+    unknown_command: "❌ Unknown command: {command}"
+    database_error: "❌ Database error: {error}"
+  log:
+    operator: "Operator"
+    player: "Player"
+    reason: "Reason"
+    duration: "Duration"
+    time: "Time"
+    na: "N/A"
+
+websocket:
+  connected: "Connected to Minecraft server"
+  success:
+    ban: "Player {player} has been banned"
+    tempban: "Player {player} has been temporarily banned"
+    unban: "Player {player} has been unbanned"
+    kick: "Player {player} has been kicked"
+    warn: "Player {player} has been warned"
+    mute: "Player {player} has been muted"
+    unmute: "Player {player} has been unmuted"
+  error:
+    missing_action: "Missing action field"
+    unknown_action: "Unknown action: {action}"
+    processing_request: "Error processing request: {error}"
+    executing_command: "Error executing command: {error}"
+    player_name_required: "Player name is required"
+    player_not_online: "Player {player} is not online"
+    player_not_banned: "Player {player} is not banned"
+    player_not_muted: "Player {player} is not muted"
+    unban_failed: "Failed to unban player: {error}"
+    unmute_failed: "Failed to unmute player: {error}"
+
+disconnect:
+  reason_label: "Reason"
+  duration_label: "Duration"
+  remaining_label: "Remaining"
+  issued_by_label: "Issued by"
 

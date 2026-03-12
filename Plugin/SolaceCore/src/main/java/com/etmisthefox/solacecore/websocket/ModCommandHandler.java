@@ -28,7 +28,7 @@ public class ModCommandHandler {
 
     public void handleCommand(String action, JsonObject json, WebSocket conn, ModeratorWebSocketServer server) {
         String playerName = json.has("playerName") ? json.get("playerName").getAsString() : null;
-        String reason = json.has("reason") ? json.get("reason").getAsString() : "No reason specified";
+        String reason = json.has("reason") ? json.get("reason").getAsString() : languageManager.getMessage("punishment.no_reason");
         String moderator = json.has("moderator") ? json.get("moderator").getAsString() : null;
 
         try {
@@ -55,16 +55,16 @@ public class ModCommandHandler {
                     handleUnmute(conn, server, playerName);
                     break;
                 default:
-                    server.sendError(conn, "Unknown action: " + action);
+                    server.sendError(conn, languageManager.getMessage("websocket.error.unknown_action", "action", action));
             }
         } catch (Exception e) {
-            server.sendError(conn, "Error executing command: " + e.getMessage());
+            server.sendError(conn, languageManager.getMessage("websocket.error.executing_command", "error", e.getMessage()));
         }
     }
 
     private void handleBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
-            server.sendError(conn, "Player name is required");
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
             return;
         }
 
@@ -73,7 +73,7 @@ public class ModCommandHandler {
             Player player = Bukkit.getPlayer(playerName);
             PunishmentUtil.executePunishment(database, languageManager, PunishmentType.BAN, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
 
-            server.sendSuccess(conn, "ban", "Player " + playerName + " has been banned");
+            server.sendSuccess(conn, "ban", languageManager.getMessage("websocket.success.ban", "player", playerName));
 
             // Notifikovat ostatní klienty
             JsonObject notification = new JsonObject();
@@ -87,7 +87,7 @@ public class ModCommandHandler {
 
     private void handleTempBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
-            server.sendError(conn, "Player name is required");
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
             return;
         }
 
@@ -98,7 +98,7 @@ public class ModCommandHandler {
             Player player = Bukkit.getPlayer(playerName);
             PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), player, reason, duration, "web", moderator);
 
-            server.sendSuccess(conn, "tempban", "Player " + playerName + " has been temporarily banned");
+            server.sendSuccess(conn, "tempban", languageManager.getMessage("websocket.success.tempban", "player", playerName));
 
             JsonObject notification = new JsonObject();
             notification.addProperty("type", "action");
@@ -112,7 +112,7 @@ public class ModCommandHandler {
 
     private void handleUnban(WebSocket conn, ModeratorWebSocketServer server, String playerName) {
         if (playerName == null || playerName.isEmpty()) {
-            server.sendError(conn, "Player name is required");
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
             return;
         }
 
@@ -132,11 +132,11 @@ public class ModCommandHandler {
             }
 
             if (!unbanned) {
-                server.sendError(conn, "Player is not banned");
+                server.sendError(conn, languageManager.getMessage("websocket.error.player_not_banned", "player", playerName));
                 return;
             }
 
-            server.sendSuccess(conn, "unban", "Player " + playerName + " has been unbanned");
+            server.sendSuccess(conn, "unban", languageManager.getMessage("websocket.success.unban", "player", playerName));
 
             JsonObject notification = new JsonObject();
             notification.addProperty("type", "action");
@@ -144,13 +144,13 @@ public class ModCommandHandler {
             notification.addProperty("playerName", playerName);
             server.sendToAll(notification);
         } catch (SQLException e) {
-            server.sendError(conn, "Failed to unban player: " + e.getMessage());
+            server.sendError(conn, languageManager.getMessage("websocket.error.unban_failed", "error", e.getMessage()));
         }
     }
 
     private void handleKick(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
-            server.sendError(conn, "Player name is required");
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
             return;
         }
 
@@ -159,9 +159,9 @@ public class ModCommandHandler {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
                 PunishmentUtil.executePunishment(database, languageManager, PunishmentType.KICK, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
-                server.sendSuccess(conn, "kick", "Player " + playerName + " has been kicked");
+                server.sendSuccess(conn, "kick", languageManager.getMessage("websocket.success.kick", "player", playerName));
             } else {
-                server.sendError(conn, "Player is not online");
+                server.sendError(conn, languageManager.getMessage("websocket.error.player_not_online", "player", playerName));
             }
 
             JsonObject notification = new JsonObject();
@@ -175,7 +175,7 @@ public class ModCommandHandler {
 
     private void handleWarn(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
-            server.sendError(conn, "Player name is required");
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
             return;
         }
 
@@ -184,9 +184,9 @@ public class ModCommandHandler {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
                 PunishmentUtil.executePunishment(database, languageManager, PunishmentType.WARN, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
-                server.sendSuccess(conn, "warn", "Player " + playerName + " has been warned");
+                server.sendSuccess(conn, "warn", languageManager.getMessage("websocket.success.warn", "player", playerName));
             } else {
-                server.sendError(conn, "Player is not online");
+                server.sendError(conn, languageManager.getMessage("websocket.error.player_not_online", "player", playerName));
             }
 
             JsonObject notification = new JsonObject();
@@ -200,7 +200,7 @@ public class ModCommandHandler {
 
     private void handleMute(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json, String moderator) {
         if (playerName == null || playerName.isEmpty()) {
-            server.sendError(conn, "Player name is required");
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
             return;
         }
 
@@ -216,9 +216,9 @@ public class ModCommandHandler {
                     PunishmentUtil.executePunishment(database, languageManager, PunishmentType.MUTE, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
                 }
 
-                server.sendSuccess(conn, "mute", "Player " + playerName + " has been muted");
+                server.sendSuccess(conn, "mute", languageManager.getMessage("websocket.success.mute", "player", playerName));
             } else {
-                server.sendError(conn, "Player is not online");
+                server.sendError(conn, languageManager.getMessage("websocket.error.player_not_online", "player", playerName));
             }
 
             JsonObject notification = new JsonObject();
@@ -233,7 +233,7 @@ public class ModCommandHandler {
 
     private void handleUnmute(WebSocket conn, ModeratorWebSocketServer server, String playerName) {
         if (playerName == null || playerName.isEmpty()) {
-            server.sendError(conn, "Player name is required");
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
             return;
         }
 
@@ -250,18 +250,18 @@ public class ModCommandHandler {
             }
 
             if (!unmuted) {
-                server.sendError(conn, "Player is not muted");
+                server.sendError(conn, languageManager.getMessage("websocket.error.player_not_muted", "player", playerName));
                 return;
             }
 
             Bukkit.getScheduler().runTask(plugin, () -> {
                 Player player = Bukkit.getPlayer(playerName);
                 if (player != null) {
-                    player.sendMessage("§a[UNMUTE] §fYou have been unmuted.");
+                    player.sendMessage(languageManager.getMessage("player_messages.unmuted", "operator", "web"));
                 }
             });
 
-            server.sendSuccess(conn, "unmute", "Player " + playerName + " has been unmuted");
+            server.sendSuccess(conn, "unmute", languageManager.getMessage("websocket.success.unmute", "player", playerName));
 
             JsonObject notification = new JsonObject();
             notification.addProperty("type", "action");
@@ -269,7 +269,7 @@ public class ModCommandHandler {
             notification.addProperty("playerName", playerName);
             server.sendToAll(notification);
         } catch (SQLException e) {
-            server.sendError(conn, "Failed to unmute player: " + e.getMessage());
+            server.sendError(conn, languageManager.getMessage("websocket.error.unmute_failed", "error", e.getMessage()));
         }
     }
 }
