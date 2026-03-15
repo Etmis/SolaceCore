@@ -39,7 +39,16 @@ public class ModCommandHandler {
                 case "tempban":
                     handleTempBan(conn, server, playerName, reason, json, moderator);
                     break;
+                case "ipban":
+                    handleIpBan(conn, server, playerName, reason, moderator);
+                    break;
+                case "tempipban":
+                    handleTempIpBan(conn, server, playerName, reason, json, moderator);
+                    break;
                 case "unban":
+                    handleUnban(conn, server, playerName);
+                    break;
+                case "unipban":
                     handleUnban(conn, server, playerName);
                     break;
                 case "kick":
@@ -50,6 +59,9 @@ public class ModCommandHandler {
                     break;
                 case "mute":
                     handleMute(conn, server, playerName, reason, json, moderator);
+                    break;
+                case "tempmute":
+                    handleTempMute(conn, server, playerName, reason, json, moderator);
                     break;
                 case "unmute":
                     handleUnmute(conn, server, playerName);
@@ -68,14 +80,12 @@ public class ModCommandHandler {
             return;
         }
 
-        // Naplánovat na hlavní vlákno
         Bukkit.getScheduler().runTask(plugin, () -> {
-            Player player = Bukkit.getPlayer(playerName);
-            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.BAN, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
+            Player player = Bukkit.getPlayerExact(playerName);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.BAN, Bukkit.getConsoleSender(), player, playerName, reason, null, "web", moderator);
 
             server.sendSuccess(conn, "ban", languageManager.getMessage("websocket.success.ban", "player", playerName));
 
-            // Notifikovat ostatní klienty
             JsonObject notification = new JsonObject();
             notification.addProperty("type", "action");
             notification.addProperty("action", "ban");
@@ -93,16 +103,60 @@ public class ModCommandHandler {
 
         long duration = json.has("duration") ? json.get("duration").getAsLong() : 3600;
 
-        // Naplánovat na hlavní vlákno
         Bukkit.getScheduler().runTask(plugin, () -> {
-            Player player = Bukkit.getPlayer(playerName);
-            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), player, reason, duration, "web", moderator);
+            Player player = Bukkit.getPlayerExact(playerName);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), player, playerName, reason, duration, "web", moderator);
 
             server.sendSuccess(conn, "tempban", languageManager.getMessage("websocket.success.tempban", "player", playerName));
 
             JsonObject notification = new JsonObject();
             notification.addProperty("type", "action");
             notification.addProperty("action", "tempban");
+            notification.addProperty("playerName", playerName);
+            notification.addProperty("reason", reason);
+            notification.addProperty("duration", duration);
+            server.sendToAll(notification);
+        });
+    }
+
+    private void handleIpBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, String moderator) {
+        if (playerName == null || playerName.isEmpty()) {
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
+            return;
+        }
+
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Player player = Bukkit.getPlayerExact(playerName);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.IPBAN, Bukkit.getConsoleSender(), player, playerName, reason, null, "web", moderator);
+
+            server.sendSuccess(conn, "ipban", languageManager.getMessage("websocket.success.ipban", "player", playerName));
+
+            JsonObject notification = new JsonObject();
+            notification.addProperty("type", "action");
+            notification.addProperty("action", "ipban");
+            notification.addProperty("playerName", playerName);
+            notification.addProperty("reason", reason);
+            server.sendToAll(notification);
+        });
+    }
+
+    private void handleTempIpBan(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json, String moderator) {
+        if (playerName == null || playerName.isEmpty()) {
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
+            return;
+        }
+
+        long duration = json.has("duration") ? json.get("duration").getAsLong() : 3600;
+
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Player player = Bukkit.getPlayerExact(playerName);
+            PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPIPBAN, Bukkit.getConsoleSender(), player, playerName, reason, duration, "web", moderator);
+
+            server.sendSuccess(conn, "tempipban", languageManager.getMessage("websocket.success.tempipban", "player", playerName));
+
+            JsonObject notification = new JsonObject();
+            notification.addProperty("type", "action");
+            notification.addProperty("action", "tempipban");
             notification.addProperty("playerName", playerName);
             notification.addProperty("reason", reason);
             notification.addProperty("duration", duration);
@@ -204,17 +258,11 @@ public class ModCommandHandler {
             return;
         }
 
-        long duration = json.has("duration") ? json.get("duration").getAsLong() : 0;
-
         // Naplánovat na hlavní vlákno
         Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(playerName);
             if (player != null) {
-                if (duration > 0) {
-                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPMUTE, Bukkit.getConsoleSender(), player, reason, duration, "web", moderator);
-                } else {
-                    PunishmentUtil.executePunishment(database, languageManager, PunishmentType.MUTE, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
-                }
+                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.MUTE, Bukkit.getConsoleSender(), player, reason, null, "web", moderator);
 
                 server.sendSuccess(conn, "mute", languageManager.getMessage("websocket.success.mute", "player", playerName));
             } else {
@@ -224,6 +272,36 @@ public class ModCommandHandler {
             JsonObject notification = new JsonObject();
             notification.addProperty("type", "action");
             notification.addProperty("action", "mute");
+            notification.addProperty("playerName", playerName);
+            notification.addProperty("reason", reason);
+            server.sendToAll(notification);
+        });
+    }
+
+    private void handleTempMute(WebSocket conn, ModeratorWebSocketServer server, String playerName, String reason, JsonObject json, String moderator) {
+        if (playerName == null || playerName.isEmpty()) {
+            server.sendError(conn, languageManager.getMessage("websocket.error.player_name_required"));
+            return;
+        }
+
+        long duration = json.has("duration") ? json.get("duration").getAsLong() : 0;
+        if (duration <= 0) {
+            server.sendError(conn, languageManager.getMessage("errors.invalid_time"));
+            return;
+        }
+
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Player player = Bukkit.getPlayer(playerName);
+            if (player != null) {
+                PunishmentUtil.executePunishment(database, languageManager, PunishmentType.TEMPMUTE, Bukkit.getConsoleSender(), player, reason, duration, "web", moderator);
+                server.sendSuccess(conn, "tempmute", languageManager.getMessage("websocket.success.mute", "player", playerName));
+            } else {
+                server.sendError(conn, languageManager.getMessage("websocket.error.player_not_online", "player", playerName));
+            }
+
+            JsonObject notification = new JsonObject();
+            notification.addProperty("type", "action");
+            notification.addProperty("action", "tempmute");
             notification.addProperty("playerName", playerName);
             notification.addProperty("reason", reason);
             notification.addProperty("duration", duration);

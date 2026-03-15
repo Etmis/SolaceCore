@@ -47,6 +47,11 @@ public final class MenuCommand implements CommandExecutor {
 
         Player target = Bukkit.getPlayer(args[0]);
 
+        if (target == null) {
+            player.sendMessage(lang.getMessage("errors.player_not_found"));
+            return true;
+        }
+
         // TODO: Support offline players
 
         MainMenu.getInventory(database, lang, plugin, inventoryManager, target).open(player);

@@ -19,28 +19,36 @@ public final class DisconnectScreenUtil {
     }
 
     public static Component formatDisconnectScreen(boolean kick, String punishmentMessage, String reason, String operator, String time) {
-        Component component = Component.text(ColorAPI.colorize("&6&l[SolaceCore] &8&l>> &7") + punishmentMessage)
+        String title = valueOrFallback(punishmentMessage, "You have been punished.");
+        String reasonLabel = valueOrFallback(languageManager.getMessage("disconnect.reason_label"), "Reason");
+        String durationLabel = valueOrFallback(languageManager.getMessage("disconnect.duration_label"), "Duration");
+        String remainingLabel = valueOrFallback(languageManager.getMessage("disconnect.remaining_label"), "Remaining");
+        String issuedByLabel = valueOrFallback(languageManager.getMessage("disconnect.issued_by_label"), "Issued by");
+        String reasonValue = valueOrFallback(reason, "No reason specified");
+        String operatorValue = valueOrFallback(operator, "System");
+
+        Component component = Component.text(ColorAPI.colorize("&6&l[SolaceCore] &8&l>> &7") + title)
                 .append(Component.newline())
                 .append(Component.newline())
-                .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.reason_label") + " &8&l>> &7") + reason));
+            .append(Component.text(ColorAPI.colorize("&6" + reasonLabel + " &8&l>> &7") + reasonValue));
         if (time != null) {
             if (kick) {
                 component = component
                         .append(Component.newline())
                         .append(Component.newline())
-                        .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.duration_label") + " &8&l>> &7") + time));
+                .append(Component.text(ColorAPI.colorize("&6" + durationLabel + " &8&l>> &7") + time));
             }
             else {
                 component = component
                         .append(Component.newline())
                         .append(Component.newline())
-                        .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.remaining_label") + " &8&l>> &7") + time));
+                .append(Component.text(ColorAPI.colorize("&6" + remainingLabel + " &8&l>> &7") + time));
             }
         }
         component = component
                 .append(Component.newline())
                 .append(Component.newline())
-                .append(Component.text(ColorAPI.colorize("&6" + languageManager.getMessage("disconnect.issued_by_label") + " &8&l>> &7" + operator)));
+            .append(Component.text(ColorAPI.colorize("&6" + issuedByLabel + " &8&l>> &7" + operatorValue)));
 
         ConfigurationSection section = fileConfiguration.getConfigurationSection("appeal_url");
         if (section != null) {
@@ -62,6 +70,9 @@ public final class DisconnectScreenUtil {
                     link = sub.getString("link");
                 }
 
+                displayName = valueOrFallback(displayName, key);
+                link = valueOrFallback(link, "");
+
                 Component linkLine = Component.text(ColorAPI.colorize(displayName + " &8&l>> &7"))
                         .append(Component.text(ColorAPI.colorize(link)))
                         .append(Component.newline());
@@ -69,5 +80,9 @@ public final class DisconnectScreenUtil {
             }
         }
         return component;
+    }
+
+    private static String valueOrFallback(String value, String fallback) {
+        return (value == null || value.isBlank()) ? fallback : value;
     }
 }

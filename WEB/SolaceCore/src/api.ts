@@ -182,8 +182,24 @@ export async function mutePlayer(playerName: string, reason?: string, duration?:
   return post('/api/mod/mute', { playerName, reason, duration }, true)
 }
 
+export async function tempMutePlayer(playerName: string, duration: number, reason?: string): Promise<{ success: boolean; message: string }> {
+  return post('/api/mod/tempmute', { playerName, duration, reason }, true)
+}
+
 export async function unmutePlayer(playerName: string): Promise<{ success: boolean; message: string }> {
   return post('/api/mod/unmute', { playerName }, true)
+}
+
+export async function ipBanPlayer(playerName: string, reason?: string): Promise<{ success: boolean; message: string }> {
+  return post('/api/mod/ipban', { playerName, reason }, true)
+}
+
+export async function tempIpBanPlayer(playerName: string, duration: number, reason?: string): Promise<{ success: boolean; message: string }> {
+  return post('/api/mod/tempipban', { playerName, duration, reason }, true)
+}
+
+export async function unIpBanPlayer(playerName: string): Promise<{ success: boolean; message: string }> {
+  return post('/api/mod/unipban', { playerName }, true)
 }
 
 export async function getModActions(): Promise<ModAction[]> {

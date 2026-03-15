@@ -35,17 +35,39 @@ export default function AdminPanel() {
   const [newRoleName, setNewRoleName] = useState('')
   const [newRolePermissions, setNewRolePermissions] = useState({
     ban: false,
+    tempban: false,
     unban: false,
     warn: false,
     kick: false,
     mute: false,
+    tempmute: false,
     unmute: false,
+    ipban: false,
+    tempipban: false,
     manageRoles: false
   })
   
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  const ALL_PERMISSIONS: Record<string, boolean> = {
+    ban: false,
+    tempban: false,
+    unban: false,
+    warn: false,
+    kick: false,
+    mute: false,
+    tempmute: false,
+    unmute: false,
+    ipban: false,
+    tempipban: false,
+    manageRoles: false,
+  }
+
+  function mergePermissions(existing: Record<string, boolean>): Record<string, boolean> {
+    return { ...ALL_PERMISSIONS, ...existing }
+  }
 
   useEffect(() => {
     if (!hasPermission('manageRoles')) return
@@ -182,11 +204,15 @@ export default function AdminPanel() {
       setNewRoleName('')
       setNewRolePermissions({
         ban: false,
+        tempban: false,
         unban: false,
         warn: false,
         kick: false,
         mute: false,
+        tempmute: false,
         unmute: false,
+        ipban: false,
+        tempipban: false,
         manageRoles: false
       })
       loadData()
@@ -454,11 +480,15 @@ export default function AdminPanel() {
                 setNewRoleName('')
                 setNewRolePermissions({
                   ban: false,
+                  tempban: false,
                   unban: false,
                   warn: false,
                   kick: false,
                   mute: false,
+                  tempmute: false,
                   unmute: false,
+                  ipban: false,
+                  tempipban: false,
                   manageRoles: false
                 })
               }}
@@ -577,7 +607,7 @@ export default function AdminPanel() {
                         )}
                       </div>
                       <div className="role-card-actions">
-                        <button className="btn btn-primary btn-sm" onClick={() => setEditingRole(role)}>
+                        <button className="btn btn-primary btn-sm" onClick={() => setEditingRole({ ...role, permissions: mergePermissions(role.permissions) })}>
                           <FaEdit /> Edit
                         </button>
                         <button className="btn btn-danger btn-sm" onClick={() => handleDeleteRole(role.id)}>

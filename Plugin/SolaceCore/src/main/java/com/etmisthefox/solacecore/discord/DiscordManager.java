@@ -20,6 +20,7 @@ public final class DiscordManager {
     private final LanguageManager lang;
     private JDA jda;
     private TextChannel logsChannel;
+    private DiscordCommandHandler commandHandler;
 
     public DiscordManager(SolaceCore plugin, Database database, LanguageManager lang) {
         this.plugin = plugin;
@@ -33,6 +34,11 @@ public final class DiscordManager {
     }
 
     public void initialize() throws InterruptedException {
+        if (jda != null && jda.getStatus() != JDA.Status.SHUTDOWN) {
+            plugin.getLogger().warning("Discord manager is already initialized, skipping duplicate init.");
+            return;
+        }
+
         String token = plugin.getConfig().getString("discord_bot.token");
         String logsChannelId = plugin.getConfig().getString("discord_bot.logs_channel_id");
         String botName = plugin.getConfig().getString("discord_bot.bot_username");
@@ -71,7 +77,10 @@ public final class DiscordManager {
             }
         }
 
-        DiscordCommandHandler commandHandler = new DiscordCommandHandler(database, lang);
+        // Remove old guild-scoped commands so users don't see duplicates (global + guild).
+        jda.getGuilds().forEach(guild -> guild.updateCommands().queue());
+
+        commandHandler = new DiscordCommandHandler(database, lang);
         commandHandler.registerCommands(jda);
 
         jda.addEventListener(commandHandler);
@@ -105,7 +114,13 @@ public final class DiscordManager {
 
     public void shutdown() {
         if (jda != null) {
+            if (commandHandler != null) {
+                jda.removeEventListener(commandHandler);
+                commandHandler = null;
+            }
             jda.shutdown();
+            jda = null;
+            logsChannel = null;
         }
     }
 }

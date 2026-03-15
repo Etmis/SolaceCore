@@ -266,14 +266,7 @@ app.post('/api/mod/ban', authenticateModerator, requirePermission('ban'), async 
   }
 
   try {
-    // Vložit do tabulky punishments
-    await pool.query(
-      `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, isActive) 
-       VALUES (?, ?, ?, 'ban', NOW(), 1)`,
-      [playerName, reason || 'No reason specified', req.moderator.username]
-    )
-
-    // Poslat akci na Minecraft server přes WebSocket
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
     sendToMinecraft({
       action: 'ban',
       playerName: playerName,
@@ -288,7 +281,7 @@ app.post('/api/mod/ban', authenticateModerator, requirePermission('ban'), async 
 })
 
 // POST /api/mod/tempban - Dočasný ban hráče
-app.post('/api/mod/tempban', authenticateModerator, requirePermission('ban'), async (req, res) => {
+app.post('/api/mod/tempban', authenticateModerator, requirePermission('tempban'), async (req, res) => {
   const { playerName, reason, duration } = req.body
   
   if (!playerName || !duration) {
@@ -300,15 +293,8 @@ app.post('/api/mod/tempban', authenticateModerator, requirePermission('ban'), as
     if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return res.status(400).json({ error: 'Duration must be a positive number of seconds' })
     }
-    const endDate = new Date(Date.now() + durationSeconds * 1000)
 
-    await pool.query(
-      `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, \`end\`, duration, isActive) 
-       VALUES (?, ?, ?, 'tempban', NOW(), ?, ?, 1)`,
-      [playerName, reason || 'No reason specified', req.moderator.username, endDate, durationSeconds]
-    )
-
-    // Poslat akci na Minecraft server přes WebSocket
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
     sendToMinecraft({
       action: 'tempban',
       playerName: playerName,
@@ -332,14 +318,7 @@ app.post('/api/mod/unban', authenticateModerator, requirePermission('unban'), as
   }
 
   try {
-    // Deaktivovat všechny aktivní bany
-    await pool.query(
-      `UPDATE punishments SET isActive = 0 
-       WHERE player_name = ? AND punishmentType IN ('ban', 'tempban') AND isActive = 1`,
-      [playerName]
-    )
-
-    // Poslat akci na Minecraft server přes WebSocket
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB unpunish)
     sendToMinecraft({
       action: 'unban',
       playerName: playerName,
@@ -361,13 +340,7 @@ app.post('/api/mod/warn', authenticateModerator, requirePermission('warn'), asyn
   }
 
   try {
-    await pool.query(
-      `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, isActive) 
-       VALUES (?, ?, ?, 'warn', NOW(), 1)`,
-      [playerName, reason || 'No reason specified', req.moderator.username]
-    )
-
-    // Poslat akci na Minecraft server přes WebSocket
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
     sendToMinecraft({
       action: 'warn',
       playerName: playerName,
@@ -390,13 +363,7 @@ app.post('/api/mod/kick', authenticateModerator, requirePermission('kick'), asyn
   }
 
   try {
-    await pool.query(
-      `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, isActive) 
-       VALUES (?, ?, ?, 'kick', NOW(), 0)`,
-      [playerName, reason || 'No reason specified', req.moderator.username]
-    )
-
-    // Poslat akci na Minecraft server přes WebSocket
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
     sendToMinecraft({
       action: 'kick',
       playerName: playerName,
@@ -412,44 +379,51 @@ app.post('/api/mod/kick', authenticateModerator, requirePermission('kick'), asyn
 
 // POST /api/mod/mute - Umlčení hráče
 app.post('/api/mod/mute', authenticateModerator, requirePermission('mute'), async (req, res) => {
-  const { playerName, reason, duration } = req.body
+  const { playerName, reason } = req.body
   
   if (!playerName) {
     return res.status(400).json({ error: 'Player name required' })
   }
 
   try {
-    const durationSeconds = duration ? parseInt(duration, 10) : null
-
-    if (durationSeconds !== null) {
-      if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
-        return res.status(400).json({ error: 'Duration must be a positive number of seconds' })
-      }
-      const endDate = new Date(Date.now() + durationSeconds * 1000)
-      
-      await pool.query(
-        `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, \`end\`, duration, isActive) 
-         VALUES (?, ?, ?, 'mute', NOW(), ?, ?, 1)`,
-        [playerName, reason || 'No reason specified', req.moderator.username, endDate, durationSeconds]
-      )
-    } else {
-      await pool.query(
-        `INSERT INTO punishments (player_name, reason, operator, punishmentType, start, isActive) 
-         VALUES (?, ?, ?, 'mute', NOW(), 1)`,
-        [playerName, reason || 'No reason specified', req.moderator.username]
-      )
-    }
-
-    // Poslat akci na Minecraft server přes WebSocket
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
     sendToMinecraft({
       action: 'mute',
+      playerName: playerName,
+      reason: reason || 'No reason specified',
+      moderator: req.moderator.username
+    })
+
+    res.json({ success: true, message: `Player ${playerName} has been muted` })
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// POST /api/mod/tempmute - Dočasné umlčení hráče
+app.post('/api/mod/tempmute', authenticateModerator, requirePermission('tempmute'), async (req, res) => {
+  const { playerName, reason, duration } = req.body
+
+  if (!playerName || !duration) {
+    return res.status(400).json({ error: 'Player name and duration required' })
+  }
+
+  try {
+    const durationSeconds = parseInt(duration, 10)
+    if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return res.status(400).json({ error: 'Duration must be a positive number of seconds' })
+    }
+
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
+    sendToMinecraft({
+      action: 'tempmute',
       playerName: playerName,
       reason: reason || 'No reason specified',
       duration: durationSeconds,
       moderator: req.moderator.username
     })
 
-    res.json({ success: true, message: `Player ${playerName} has been muted` })
+    res.json({ success: true, message: `Player ${playerName} has been temp-muted` })
   } catch (e) {
     res.status(500).json({ error: String(e?.message || e) })
   }
@@ -464,13 +438,7 @@ app.post('/api/mod/unmute', authenticateModerator, requirePermission('unmute'), 
   }
 
   try {
-    await pool.query(
-      `UPDATE punishments SET isActive = 0 
-       WHERE player_name = ? AND punishmentType = 'mute' AND isActive = 1`,
-      [playerName]
-    )
-
-    // Poslat akci na Minecraft server přes WebSocket
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB unpunish)
     sendToMinecraft({
       action: 'unmute',
       playerName: playerName,
@@ -478,6 +446,80 @@ app.post('/api/mod/unmute', authenticateModerator, requirePermission('unmute'), 
     })
 
     res.json({ success: true, message: `Player ${playerName} has been unmuted` })
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// POST /api/mod/ipban - Permanentní IP ban hráče
+app.post('/api/mod/ipban', authenticateModerator, requirePermission('ipban'), async (req, res) => {
+  const { playerName, reason } = req.body
+
+  if (!playerName) {
+    return res.status(400).json({ error: 'Player name required' })
+  }
+
+  try {
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
+    sendToMinecraft({
+      action: 'ipban',
+      playerName: playerName,
+      reason: reason || 'No reason specified',
+      moderator: req.moderator.username
+    })
+
+    res.json({ success: true, message: `Player ${playerName} has been IP banned` })
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// POST /api/mod/tempipban - Dočasný IP ban hráče
+app.post('/api/mod/tempipban', authenticateModerator, requirePermission('tempipban'), async (req, res) => {
+  const { playerName, reason, duration } = req.body
+
+  if (!playerName || !duration) {
+    return res.status(400).json({ error: 'Player name and duration required' })
+  }
+
+  try {
+    const durationSeconds = parseInt(duration, 10)
+    if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return res.status(400).json({ error: 'Duration must be a positive number of seconds' })
+    }
+
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB persistenci)
+    sendToMinecraft({
+      action: 'tempipban',
+      playerName: playerName,
+      reason: reason || 'No reason specified',
+      duration: durationSeconds,
+      moderator: req.moderator.username
+    })
+
+    res.json({ success: true, message: `Player ${playerName} has been temp IP banned` })
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
+  }
+})
+
+// POST /api/mod/unipban - Odebrání IP banu hráče
+app.post('/api/mod/unipban', authenticateModerator, requirePermission('ipban'), async (req, res) => {
+  const { playerName } = req.body
+
+  if (!playerName) {
+    return res.status(400).json({ error: 'Player name required' })
+  }
+
+  try {
+    // Poslat akci na Minecraft server přes WebSocket (plugin provede i DB unpunish)
+    sendToMinecraft({
+      action: 'unipban',
+      playerName: playerName,
+      moderator: req.moderator.username
+    })
+
+    res.json({ success: true, message: `IP ban for player ${playerName} has been removed` })
   } catch (e) {
     res.status(500).json({ error: String(e?.message || e) })
   }

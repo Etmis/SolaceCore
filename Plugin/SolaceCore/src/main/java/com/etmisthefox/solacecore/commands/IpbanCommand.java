@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public final class IpbanCommand implements CommandExecutor {
@@ -34,7 +35,8 @@ public final class IpbanCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, sender, Bukkit.getPlayer(args[0]), reason, null);
+        Player target = Bukkit.getPlayerExact(args[0]);
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, sender, target, args[0], reason, null);
         return true;
     }
 }

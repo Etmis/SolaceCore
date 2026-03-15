@@ -101,6 +101,16 @@ public final class Database {
         }
     }
 
+    public boolean playerExistsByName(String playerName) throws SQLException {
+        String sql = "SELECT 1 FROM players WHERE name = ? LIMIT 1";
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, playerName);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next();
+            }
+        }
+    }
+
     public void createPunishment(Punishment punishment) throws SQLException {
 
         String sql = "INSERT INTO punishments(player_name, reason, operator, punishmentType, start, end, duration, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";

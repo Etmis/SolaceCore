@@ -21,9 +21,9 @@ DROP TABLE IF EXISTS mod_actions;
 
 -- Výchozí role pro administrátory (všechna oprávnění)
 INSERT INTO roles (name, permissions) VALUES 
-('Admin', '{"ban": true, "unban": true, "warn": true, "kick": true, "mute": true, "unmute": true, "manageRoles": true, "viewActions": true}'),
-('Moderator', '{"ban": true, "unban": false, "warn": true, "kick": true, "mute": true, "unmute": true, "manageRoles": false, "viewActions": true}'),
-('Helper', '{"ban": false, "unban": false, "warn": true, "kick": false, "mute": false, "unmute": false, "manageRoles": false, "viewActions": false}')
+('Admin', '{"ban": true, "tempban": true, "unban": true, "warn": true, "kick": true, "mute": true, "tempmute": true, "unmute": true, "ipban": true, "tempipban": true, "manageRoles": true, "viewActions": true}'),
+('Moderator', '{"ban": true, "tempban": true, "unban": false, "warn": true, "kick": true, "mute": true, "tempmute": true, "unmute": true, "ipban": false, "tempipban": false, "manageRoles": false, "viewActions": true}'),
+('Helper', '{"ban": false, "tempban": false, "unban": false, "warn": true, "kick": false, "mute": false, "tempmute": false, "unmute": false, "ipban": false, "tempipban": false, "manageRoles": false, "viewActions": false}')
 ON DUPLICATE KEY UPDATE name=name;
 
 -- Příklad vytvoření testovacího moderátora (heslo: "admin123")

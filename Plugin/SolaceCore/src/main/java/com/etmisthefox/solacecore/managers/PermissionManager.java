@@ -58,7 +58,7 @@ public final class PermissionManager {
 
         return switch (type) {
             case KICK -> target.hasPermission(PROTECT_KICK);
-            case BAN, TEMPBAN, IPBAN -> target.hasPermission(PROTECT_BAN);
+            case BAN, TEMPBAN, IPBAN, TEMPIPBAN -> target.hasPermission(PROTECT_BAN);
             case MUTE, TEMPMUTE -> target.hasPermission(PROTECT_MUTE);
             default -> false;
         };
