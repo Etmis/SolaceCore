@@ -1,9 +1,5 @@
 language: en
 
-# WebSocket port pro moderátorské akce z webu
-# Web se bude připojovat na: ws://localhost:8080
-websocket-port: 8080
-
 database:
 # only mysql (for now)
   ip_address: "127.0.0.1"
@@ -11,6 +7,11 @@ database:
   database_name: "solacecore"
   user: "root"
   password: ""
+
+websocket:
+  enabled: false
+  ip_address: "127.0.0.1"
+  port: "8081"
 
 discord_bot:
   enabled: false

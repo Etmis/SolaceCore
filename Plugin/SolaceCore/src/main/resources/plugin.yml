@@ -25,7 +25,7 @@ commands:
   tempipban:
     description: Temporarily IP-ban a player
     usage: /tempipban <player> <time> [reason]
-    permission: solacecore.tempban
+    permission: solacecore.tempipban
   unban:
     description: Unban a player
     usage: /unban <player>
@@ -54,6 +54,10 @@ commands:
     description: Main menu
     usage: /menu <player>
     permission: solacecore.menu
+  reload:
+    description: Reload language files
+    usage: /reload
+    permission: solacecore.reload
 permissions:
   solacecore.kick:
     default: op
@@ -84,4 +88,6 @@ permissions:
   solacecore.muteprotection:
     default: op
   solacecore.menu:
+    default: op
+  solacecore.reloadlang:
     default: op

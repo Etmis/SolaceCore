@@ -47,12 +47,12 @@ public final class PaginationUtil {
         return all.subList(info.fromIndex, Math.min(info.toIndex, all.size()));
     }
 
-    public static Component buildHeader(String titlePrefix, String subject, PageInfo info) {
-        return buildHeader(titlePrefix, subject, info, "Page");
+    public static Component buildHeader(Component titlePrefix, String subject, PageInfo info) {
+        return buildHeader(titlePrefix, subject, info, Component.text("Page"));
     }
 
-    public static Component buildHeader(String titlePrefix, String subject, PageInfo info, String pageLabel) {
-        return Component.text(titlePrefix, NamedTextColor.GOLD)
+    public static Component buildHeader(Component titlePrefix, String subject, PageInfo info, Component pageLabel) {
+        return titlePrefix.colorIfAbsent(NamedTextColor.GOLD)
                 .append(Component.text(subject, NamedTextColor.YELLOW, TextDecoration.BOLD))
                 .append(Component.text(" (", NamedTextColor.GOLD))
                 .append(Component.text(pageLabel + " " + info.page + "/" + info.totalPages, NamedTextColor.AQUA))
@@ -60,14 +60,14 @@ public final class PaginationUtil {
     }
 
     public static Component buildFooter(PageInfo info, IntFunction<String> commandForPage) {
-        return buildFooter(info, commandForPage, "Previous page", "Next page");
+        return buildFooter(info, commandForPage, Component.text("Previous page"), Component.text("Next page"));
     }
 
-    public static Component buildFooter(PageInfo info, IntFunction<String> commandForPage, String previousPageLabel, String nextPageLabel) {
+    public static Component buildFooter(PageInfo info, IntFunction<String> commandForPage, Component previousPageLabel, Component nextPageLabel) {
         Component footer = Component.empty();
         if (info.page > 1) {
             Component prev = Component.text("<<", NamedTextColor.YELLOW, TextDecoration.BOLD)
-                    .hoverEvent(HoverEvent.showText(Component.text(previousPageLabel, NamedTextColor.GRAY)))
+                    .hoverEvent(HoverEvent.showText(previousPageLabel.colorIfAbsent(NamedTextColor.GRAY)))
                     .clickEvent(ClickEvent.runCommand(commandForPage.apply(info.page - 1)));
             footer = footer.append(prev);
         }
@@ -76,7 +76,7 @@ public final class PaginationUtil {
         }
         if (info.page < info.totalPages) {
             Component next = Component.text(">>", NamedTextColor.YELLOW, TextDecoration.BOLD)
-                    .hoverEvent(HoverEvent.showText(Component.text(nextPageLabel, NamedTextColor.GRAY)))
+                    .hoverEvent(HoverEvent.showText(nextPageLabel.colorIfAbsent(NamedTextColor.GRAY)))
                     .clickEvent(ClickEvent.runCommand(commandForPage.apply(info.page + 1)));
             footer = footer.append(next);
         }

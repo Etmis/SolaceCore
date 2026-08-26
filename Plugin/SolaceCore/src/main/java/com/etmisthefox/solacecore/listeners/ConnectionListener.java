@@ -38,14 +38,14 @@ public final class ConnectionListener implements Listener {
                 switch (type) {
                     case PunishmentType.BAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
                             DisconnectScreenUtil.formatDisconnectScreen(false,
-                                    lang.getMessage("player_messages.ban"),
+                                    lang.getRawMessage("player_messages.ban"),
                                     punishment.getReason(),
                                     punishment.getOperator(),
                                     null)
                     );
                     case PunishmentType.TEMPBAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
                             DisconnectScreenUtil.formatDisconnectScreen(false,
-                                    lang.getMessage("player_messages.tempban"),
+                                    lang.getRawMessage("player_messages.tempban"),
                                     punishment.getReason(),
                                     punishment.getOperator(),
                                     formatDuration(Duration.between(LocalDateTime.now(), punishment.getStart().plusSeconds(punishment.getDuration())).getSeconds()))
@@ -57,13 +57,13 @@ public final class ConnectionListener implements Listener {
                 switch (type) {
                     case PunishmentType.IPBAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
                         DisconnectScreenUtil.formatDisconnectScreen(false,
-                                lang.getMessage("player_messages.ipban"),
+                                lang.getRawMessage("player_messages.ipban"),
                                 ipPunishment.getReason(),
                                 ipPunishment.getOperator(),
                                 null));
                     case PunishmentType.TEMPIPBAN -> event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED,
                             DisconnectScreenUtil.formatDisconnectScreen(false,
-                                    lang.getMessage("player_messages.tempipban"),
+                                    lang.getRawMessage("player_messages.tempipban"),
                                     ipPunishment.getReason(),
                                     ipPunishment.getOperator(),
                                     formatDuration(Duration.between(LocalDateTime.now(), ipPunishment.getStart().plusSeconds(ipPunishment.getDuration())).getSeconds())));

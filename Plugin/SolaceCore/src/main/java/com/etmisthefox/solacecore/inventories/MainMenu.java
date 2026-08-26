@@ -30,7 +30,7 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
                 .id("mainMenu")
                 .provider(new MainMenu(database, lang, plugin, inventoryManager, target))
                 .size(6, 9)
-                .title(lang.getMessage("gui.main_menu.title"))
+                .title(lang.getRawMessage("gui.main_menu.title"))
                 .manager(inventoryManager)
                 .build();
     }
@@ -47,7 +47,7 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
         // Close -> Barrier
         ItemStack barrier = new ItemStack(Material.BARRIER);
         ItemMeta barrierMeta = barrier.getItemMeta();
-        barrierMeta.displayName(Component.text(lang.getMessage("gui.main_menu.close")));
+        barrierMeta.displayName(lang.getMessage("gui.main_menu.close"));
         barrier.setItemMeta(barrierMeta);
         contents.set(5, 4, ClickableItem.of(barrier, e -> player.closeInventory()));
 
@@ -69,19 +69,19 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
 
         List<Component> punishLore = new ArrayList<>();
         if (punishments.isEmpty()) {
-            punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments.none")));
+            punishLore.add(lang.getMessage("gui.main_menu.punishments.none"));
         } else {
-            punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments.header")));
+            punishLore.add(lang.getMessage("gui.main_menu.punishments.header"));
             int maxLines = 15;
             int count = 0;
             for (Punishment p : punishments) {
                 if (count >= maxLines) break;
                 StringBuilder sb = new StringBuilder();
                 String rawType = p.getPunishmentType() != null ? p.getPunishmentType().toLowerCase() : null;
-                String typeLabel = rawType != null ? lang.getMessage("gui.common.punishment_type." + rawType) : null;
+                Component typeLabel = rawType != null ? lang.getMessage("gui.common.punishment_type." + rawType) : null;
                 if (typeLabel == null) typeLabel = lang.getMessage("gui.common.unknown");
                 sb.append(typeLabel);
-                if (p.getReason() != null && !p.getReason().isEmpty()) {
+                if (p.getReason() != null && !p.getReason().toString().isEmpty()) {
                     sb.append(" - ").append(p.getReason());
                 }
                 if (p.getOperator() != null && !p.getOperator().isEmpty()) {
@@ -96,14 +96,14 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
             }
             if (punishments.size() > maxLines) {
                 int more = punishments.size() - maxLines;
-                punishLore.add(Component.text(lang.getMessage("gui.main_menu.punishments.more", "count", String.valueOf(more))));
+                punishLore.add(lang.getMessage("gui.main_menu.punishments.more", "count", String.valueOf(more)));
             }
         }
 
         // Paper with punishments next to the head
         ItemStack punishPaper = new ItemStack(Material.PAPER);
         ItemMeta punishMeta = punishPaper.getItemMeta();
-        punishMeta.displayName(Component.text(lang.getMessage("gui.main_menu.punishments.title"), NamedTextColor.YELLOW));
+        punishMeta.displayName(lang.getMessage("gui.main_menu.punishments.title").colorIfAbsent(NamedTextColor.YELLOW));
         punishMeta.lore(punishLore);
         punishPaper.setItemMeta(punishMeta);
         contents.set(1, 5, ClickableItem.empty(punishPaper));
@@ -112,49 +112,49 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
         // Kick -> White Concrete
         ItemStack kickItem = new ItemStack(Material.WHITE_CONCRETE);
         ItemMeta kickMeta = kickItem.getItemMeta();
-        kickMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.kick"), NamedTextColor.WHITE));
+        kickMeta.displayName(lang.getMessage("gui.main_menu.actions.kick").colorIfAbsent(NamedTextColor.WHITE));
         kickItem.setItemMeta(kickMeta);
         contents.set(2, 2, ClickableItem.of(kickItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.KICK).open(player)));
 
         // Ban -> Red Concrete
         ItemStack banItem = new ItemStack(Material.RED_CONCRETE);
         ItemMeta banMeta = banItem.getItemMeta();
-        banMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.ban"), NamedTextColor.RED));
+        banMeta.displayName(lang.getMessage("gui.main_menu.actions.ban").colorIfAbsent(NamedTextColor.RED));
         banItem.setItemMeta(banMeta);
         contents.set(2, 3, ClickableItem.of(banItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.BAN).open(player)));
 
         // Tempban -> Orange Concrete
         ItemStack tempbanItem = new ItemStack(Material.ORANGE_CONCRETE);
         ItemMeta tempbanMeta = tempbanItem.getItemMeta();
-        tempbanMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.tempban"), NamedTextColor.GOLD));
+        tempbanMeta.displayName(lang.getMessage("gui.main_menu.actions.tempban").colorIfAbsent(NamedTextColor.GOLD));
         tempbanItem.setItemMeta(tempbanMeta);
         contents.set(2, 4, ClickableItem.of(tempbanItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.TEMPBAN).open(player)));
 
         // IP Ban -> Black Concrete
         ItemStack ipbanItem = new ItemStack(Material.BLACK_CONCRETE);
         ItemMeta ipbanMeta = ipbanItem.getItemMeta();
-        ipbanMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.ipban"), NamedTextColor.DARK_GRAY));
+        ipbanMeta.displayName(lang.getMessage("gui.main_menu.actions.ipban").colorIfAbsent(NamedTextColor.DARK_GRAY));
         ipbanItem.setItemMeta(ipbanMeta);
         contents.set(2, 5, ClickableItem.of(ipbanItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.IPBAN).open(player)));
 
         // Mute -> Gray Concrete
         ItemStack muteItem = new ItemStack(Material.GRAY_CONCRETE);
         ItemMeta muteMeta = muteItem.getItemMeta();
-        muteMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.mute"), NamedTextColor.GRAY));
+        muteMeta.displayName(lang.getMessage("gui.main_menu.actions.mute").colorIfAbsent(NamedTextColor.GRAY));
         muteItem.setItemMeta(muteMeta);
         contents.set(3, 2, ClickableItem.of(muteItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.MUTE).open(player)));
 
         // Tempmute -> Light Gray Concrete
         ItemStack tempmuteItem = new ItemStack(Material.LIGHT_GRAY_CONCRETE);
         ItemMeta tempmuteMeta = tempmuteItem.getItemMeta();
-        tempmuteMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.tempmute"), NamedTextColor.GRAY));
+        tempmuteMeta.displayName(lang.getMessage("gui.main_menu.actions.tempmute").colorIfAbsent(NamedTextColor.GRAY));
         tempmuteItem.setItemMeta(tempmuteMeta);
         contents.set(3, 3, ClickableItem.of(tempmuteItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.TEMPMUTE).open(player)));
 
         // Warn -> Yellow Concrete
         ItemStack warnItem = new ItemStack(Material.YELLOW_CONCRETE);
         ItemMeta warnMeta = warnItem.getItemMeta();
-        warnMeta.displayName(Component.text(lang.getMessage("gui.main_menu.actions.warn"), NamedTextColor.YELLOW));
+        warnMeta.displayName(lang.getMessage("gui.main_menu.actions.warn").colorIfAbsent(NamedTextColor.YELLOW));
         warnItem.setItemMeta(warnMeta);
         contents.set(3, 4, ClickableItem.of(warnItem, e -> PunishmentMenu.getInventory(database, lang, plugin, inventoryManager, target, PunishmentType.WARN).open(player)));
     }

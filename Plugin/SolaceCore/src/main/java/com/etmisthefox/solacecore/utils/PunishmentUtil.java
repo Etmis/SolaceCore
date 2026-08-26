@@ -120,7 +120,7 @@ public final class PunishmentUtil {
         switch (punishmentType) {
             case BAN -> {
                 if (target != null) {
-                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.banned"), reason, operator, null));
+                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getRawMessage("player_messages.banned"), reason, operator, null));
                 }
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ban", LocalDateTime.now(), null, null, true);
                 try {
@@ -128,12 +128,12 @@ public final class PunishmentUtil {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("BAN", operator, targetName, reason, null);
-                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.ban_success", "player", targetName, "reason", reason)));
+                logToDiscord("BAN", operator, targetName, reason.toString(), null);
+                Bukkit.broadcast(languageManager.getMessage("punishment.ban_success", "player", targetName, "reason", reason.toString()));
             }
             case IPBAN -> {
                 if (target != null) {
-                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.ipbanned"), reason, operator, null));
+                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getRawMessage("player_messages.ipbanned"), reason, operator, null));
                 }
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "ipban", LocalDateTime.now(), null, null, true);
                 try {
@@ -141,8 +141,8 @@ public final class PunishmentUtil {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("IPBAN", operator, targetName, reason, null);
-                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.ipban_success", "player", targetName, "reason", reason)));
+                logToDiscord("IPBAN", operator, targetName, reason.toString(), null);
+                Bukkit.broadcast(languageManager.getMessage("punishment.ipban_success", "player", targetName, "reason", reason.toString()));
             }
             case TEMPIPBAN -> {
                 if (!sender.hasPermission("solacecore.tempipban")) {
@@ -157,7 +157,7 @@ public final class PunishmentUtil {
                 LocalDateTime end = start.plusSeconds(durationSeconds);
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
                 if (target != null) {
-                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempipban"), reason, operator, formattedTime));
+                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getRawMessage("player_messages.tempipban"), reason, operator, formattedTime));
                 }
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempipban", start, end, durationSeconds, true);
                 try {
@@ -165,8 +165,8 @@ public final class PunishmentUtil {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("TEMPIPBAN", operator, targetName, reason, formattedTime);
-                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.tempipban_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason)));
+                logToDiscord("TEMPIPBAN", operator, targetName, reason.toString(), formattedTime);
+                Bukkit.broadcast(languageManager.getMessage("punishment.tempipban_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason.toString()));
             }
             case TEMPBAN -> {
                 if (durationSeconds == null || durationSeconds <= 0) {
@@ -177,7 +177,7 @@ public final class PunishmentUtil {
                 LocalDateTime end = start.plusSeconds(durationSeconds);
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
                 if (target != null) {
-                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.tempbanned"), reason, operator, formattedTime));
+                    target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getRawMessage("player_messages.tempbanned"), reason, operator, formattedTime));
                 }
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempban", start, end, durationSeconds, true);
                 try {
@@ -185,20 +185,20 @@ public final class PunishmentUtil {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("TEMPBAN", operator, targetName, reason, formattedTime);
-                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.tempban_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason)));
+                logToDiscord("TEMPBAN", operator, targetName, reason.toString(), formattedTime);
+                Bukkit.broadcast(languageManager.getMessage("punishment.tempban_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason.toString()));
             }
             case MUTE -> {
                 // target validated above to be non-null for MUTE
-                target.sendMessage(languageManager.getMessage("player_messages.muted", "reason", reason, "operator", operator));
+                target.sendMessage(languageManager.getMessage("player_messages.muted", "reason", reason.toString(), "operator", operator));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "mute", LocalDateTime.now(), null, null, true);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("MUTE", operator, targetName, reason, null);
-                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.mute_success", "player", targetName, "reason", reason)));
+                logToDiscord("MUTE", operator, targetName, reason.toString(), null);
+                Bukkit.broadcast(languageManager.getMessage("punishment.mute_success", "player", targetName, "reason", reason.toString()));
             }
             case TEMPMUTE -> {
                 if (durationSeconds == null || durationSeconds <= 0) {
@@ -206,15 +206,15 @@ public final class PunishmentUtil {
                     return;
                 }
                 String formattedTime = TimeUtil.formatDuration(durationSeconds);
-                target.sendMessage(languageManager.getMessage("player_messages.tempmuted", "time", formattedTime, "reason", reason, "operator", operator));
+                target.sendMessage(languageManager.getMessage("player_messages.tempmuted", "time", formattedTime, "reason", reason.toString(), "operator", operator));
                 Punishment punishment = new Punishment(0, targetName, reason, operator, "tempmute", LocalDateTime.now(), null, durationSeconds, true);
                 try {
                     database.createPunishment(punishment);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("TEMPMUTE", operator, targetName, reason, formattedTime);
-                Bukkit.broadcast(Component.text(languageManager.getMessage("punishment.tempmute_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason)));
+                logToDiscord("TEMPMUTE", operator, targetName, reason.toString(), formattedTime);
+                Bukkit.broadcast(languageManager.getMessage("punishment.tempmute_success", "operator", operator, "player", targetName, "time", formattedTime, "reason", reason.toString()));
             }
             case KICK -> {
                 // KICK requires online target (validated above)
@@ -224,10 +224,10 @@ public final class PunishmentUtil {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("KICK", operator, targetName, reason, null);
+                logToDiscord("KICK", operator, targetName, reason.toString(), null);
                 // target validated above to be non-null for KICK
-                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getMessage("player_messages.kicked"), reason, operator, null));
-                Bukkit.broadcast(Component.text(languageManager.getMessage("broadcast.player_kicked", "player", targetName, "reason", reason)));
+                target.kick(DisconnectScreenUtil.formatDisconnectScreen(true, languageManager.getRawMessage("player_messages.kicked"), reason, operator, null));
+                Bukkit.broadcast(languageManager.getMessage("broadcast.player_kicked", "player", targetName, "reason", reason.toString()));
             }
             case WARN -> {
                 // WARN requires online target (validated above)
@@ -237,10 +237,10 @@ public final class PunishmentUtil {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                logToDiscord("WARN", operator, targetName, reason, null);
+                logToDiscord("WARN", operator, targetName, reason.toString(), null);
                 // target validated above to be non-null for WARN
-                target.sendMessage(languageManager.getMessage("player_messages.warned", "reason", reason, "operator", operator));
-                Bukkit.broadcast(Component.text(languageManager.getMessage("broadcast.player_warned", "player", targetName, "reason", reason)));
+                target.sendMessage(languageManager.getMessage("player_messages.warned", "reason", reason.toString(), "operator", operator));
+                Bukkit.broadcast(languageManager.getMessage("broadcast.player_warned", "player", targetName, "reason", reason.toString()));
             }
         }
     }

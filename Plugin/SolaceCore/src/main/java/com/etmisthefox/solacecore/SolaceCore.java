@@ -7,6 +7,7 @@ import com.etmisthefox.solacecore.websocket.ModCommandHandler;
 import com.etmisthefox.inv.InventoryManager;
 import com.etmisthefox.solacecore.listeners.ChatListener;
 import com.etmisthefox.solacecore.listeners.ConnectionListener;
+import com.etmisthefox.solacecore.managers.DiscordPermissionManager;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.ChatInputUtil;
 import com.etmisthefox.solacecore.utils.DisconnectScreenUtil;
@@ -21,11 +22,13 @@ public final class SolaceCore extends JavaPlugin {
     private Database database;
     private ModeratorWebSocketServer wsServer;
     private LanguageManager lang;
+    private DiscordPermissionManager discordPermissionManager;
     private DiscordManager discordManager;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        discordPermissionManager = new DiscordPermissionManager(this);
         InventoryManager inventoryManager = new InventoryManager(this);
         inventoryManager.init();
 
@@ -42,27 +45,32 @@ public final class SolaceCore extends JavaPlugin {
             return; // Zastavit další inicializaci
         }
 
-        // Inicializovat WebSocket server
-        int wsPort = getConfig().getInt("websocket-port", 8080);
-        getLogger().info("=======================================================");
-        getLogger().info("Starting Moderator WebSocket Server...");
-        getLogger().info("Port: " + wsPort);
-        getLogger().info("URL: ws://localhost:" + wsPort);
-        getLogger().info("=======================================================");
+        if (getConfig().getBoolean("websocket.enabled", false)) {
+            String wsHost = getConfig().getString("websocket.ip_address", "127.0.0.1");
+            String wsPort = getConfig().getString("websocket.port", "8081");
+            getLogger().info("=======================================================");
+            getLogger().info("Starting Moderator WebSocket Server...");
+            getLogger().info("Host: " + wsHost);
+            getLogger().info("Port: " + wsPort);
+            getLogger().info("URL: ws://" + wsHost + ":" + wsPort);
+            getLogger().info("=======================================================");
 
-        ModCommandHandler commandHandler = new ModCommandHandler(database, lang, this);
-        wsServer = new ModeratorWebSocketServer(wsPort, this, commandHandler, lang);
-        try {
-            wsServer.start();
-            getLogger().info("WebSocket server STARTED on port " + wsPort);
-        } catch (Exception e) {
-            getLogger().severe("Failed to start WebSocket server: " + e.getMessage());
-            e.printStackTrace();
+            ModCommandHandler commandHandler = new ModCommandHandler(database, lang, this);
+            wsServer = new ModeratorWebSocketServer(wsHost, wsPort, this, commandHandler, lang);
+            try {
+                wsServer.start();
+                getLogger().info("WebSocket server STARTED on " + wsHost + ":" + wsPort);
+            } catch (Exception e) {
+                getLogger().severe("Failed to start WebSocket server: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            getLogger().info("WebSocket server disabled in config.yml.");
         }
 
         if (getConfig().getBoolean("discord_bot.enabled", false)) {
             try {
-                discordManager = new DiscordManager(this, database, lang);
+                discordManager = new DiscordManager(this, database, lang, discordPermissionManager);
                 discordManager.initialize();
             } catch (InterruptedException e) {
                 getLogger().log(java.util.logging.Level.SEVERE, "Failed to initialize Discord bot", e);
@@ -81,6 +89,7 @@ public final class SolaceCore extends JavaPlugin {
         registerCommand("unmute", new UnmuteCommand(database, lang));
         registerCommand("menu", new MenuCommand(database, lang, this, inventoryManager));
         registerCommand("warns", new WarnsCommand(database, lang));
+        registerCommand("reload", new ReloadLanguageCommand(this, lang));
 
         getServer().getPluginManager().registerEvents(new ConnectionListener(database, lang), this);
         getServer().getPluginManager().registerEvents(new ChatListener(database, lang), this);

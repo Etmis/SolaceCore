@@ -29,7 +29,7 @@ public final class Database {
 
         FileConfiguration fc = plugin.getConfig();
 
-        String url = "jdbc:mysql://" + fc.getString("database.ip_address") + "/" + fc.getString("database.database_name");
+        String url = "jdbc:mysql://" + fc.getString("database.ip_address") + ":" + fc.getString("database.port") + "/" + fc.getString("database.database_name");
         String user = fc.getString("database.user");
         String password = fc.getString("database.password");
         connection = DriverManager.getConnection(url, user, password);

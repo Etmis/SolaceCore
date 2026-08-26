@@ -1,0 +1,11 @@
+discord:
+  # Permissions applied to every Discord account
+  default_permissions: []
+
+  # Per-account permissions by Discord user ID
+  # You can use full nodes (solacecore.discord.ban) or short names (ban)
+  # Wildcards are supported: solacecore.discord.* or *
+  accounts:
+    "123456789012345678":
+      - "solacecore.discord.*"
+

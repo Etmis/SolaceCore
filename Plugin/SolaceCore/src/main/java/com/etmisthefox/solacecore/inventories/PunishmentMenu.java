@@ -32,12 +32,12 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
     private static final Map<UUID, String> REASONS = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> DURATIONS = new ConcurrentHashMap<>(); // v sekundách
 
-    private String getReasonOrDefault(Player player) {
+    private Component getReasonOrDefault(Player player) {
         String r = REASONS.get(player.getUniqueId());
         if (r == null || r.isBlank()) {
             return lang.getMessage("punishment.no_reason");
         }
-        return r;
+        return Component.text(r);
     }
 
     private Long getDuration(Player player) {
@@ -49,7 +49,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
                 .id("punishmentMenu")
                 .provider(new PunishmentMenu(database, lang, plugin, inventoryManager, target, punishmentType))
                 .size(6, 9)
-                .title(lang.getMessage("gui.punishment_menu.title"))
+                .title(lang.getRawMessage("gui.punishment_menu.title"))
                 .manager(inventoryManager)
                 .build();
     }
@@ -66,7 +66,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
         // Back -> Arrow
         ItemStack arrow = new ItemStack(Material.ARROW);
         ItemMeta arrowMeta = arrow.getItemMeta();
-        arrowMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.back")));
+        arrowMeta.displayName(Component.text(lang.getRawMessage("gui.punishment_menu.back")));
         arrow.setItemMeta(arrowMeta);
         contents.set(5, 0, ClickableItem.of(arrow, e -> MainMenu.getInventory(database, lang, plugin, inventoryManager, target).open(player)));
 
@@ -82,17 +82,17 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
         if (punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.TEMPMUTE) {
             ItemStack clock = new ItemStack(Material.CLOCK);
             ItemMeta clockMeta = clock.getItemMeta();
-            clockMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.time.title")));
+            clockMeta.displayName(Component.text(lang.getRawMessage("gui.punishment_menu.time.title")));
             Long currentDuration = getDuration(player);
-            String formatted = currentDuration != null ? TimeUtil.formatDuration(currentDuration) : lang.getMessage("gui.common.not_set");
+            String formatted = currentDuration != null ? TimeUtil.formatDuration(currentDuration) : lang.getRawMessage("gui.common.not_set");
             List<Component> clockLore = new ArrayList<>();
-            clockLore.add(Component.text(lang.getMessage("gui.punishment_menu.time.lore_line1")));
-            clockLore.add(Component.text(lang.getMessage("gui.punishment_menu.time.current", "value", formatted)));
+            clockLore.add(Component.text(lang.getRawMessage("gui.punishment_menu.time.lore_line1")));
+            clockLore.add(Component.text(lang.getRawMessage("gui.punishment_menu.time.current", "value", formatted)));
             clockMeta.lore(clockLore);
             clock.setItemMeta(clockMeta);
             contents.set(2, 6, ClickableItem.of(clock, e -> {
                 player.closeInventory();
-                ChatInputUtil.requestInput(player, lang.getMessage("gui.prompt.enter_duration")).thenAccept(input -> {
+                ChatInputUtil.requestInput(player, lang.getRawMessage("gui.prompt.enter_duration")).thenAccept(input -> {
                     Plugin plugin = Bukkit.getPluginManager().getPlugin("SolaceCore");
                     if (plugin == null) return; // bezpečnost
                     Bukkit.getScheduler().runTask(plugin, () -> {
@@ -116,27 +116,27 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
         // Book & Quill -> Reason
         ItemStack bookAndQuill = new ItemStack(Material.WRITABLE_BOOK);
         ItemMeta bookAndQuillMeta = bookAndQuill.getItemMeta();
-        bookAndQuillMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.reason.title")));
-        String currentReason = getReasonOrDefault(player);
+        bookAndQuillMeta.displayName(Component.text(lang.getRawMessage("gui.punishment_menu.reason.title")));
+        String currentReason = getReasonOrDefault(player).toString();
         List<Component> reasonLore = new ArrayList<>();
-        reasonLore.add(Component.text(lang.getMessage("gui.punishment_menu.reason.lore_line1")));
-        reasonLore.add(Component.text(lang.getMessage("gui.punishment_menu.reason.current", "value", currentReason)));
+        reasonLore.add(Component.text(lang.getRawMessage("gui.punishment_menu.reason.lore_line1")));
+        reasonLore.add(Component.text(lang.getRawMessage("gui.punishment_menu.reason.current", "value", currentReason)));
         bookAndQuillMeta.lore(reasonLore);
         bookAndQuill.setItemMeta(bookAndQuillMeta);
         contents.set(2, 2, ClickableItem.of(bookAndQuill, e -> {
             player.closeInventory();
-            ChatInputUtil.requestInput(player, lang.getMessage("gui.prompt.enter_reason")).thenAccept(input -> {
+            ChatInputUtil.requestInput(player, lang.getRawMessage("gui.prompt.enter_reason")).thenAccept(input -> {
                 Plugin plugin = Bukkit.getPluginManager().getPlugin("SolaceCore");
                 if (plugin == null) return;
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (input == null) {
                         // cancel -> vyčistíme uložený důvod, následně se použije výchozí no_reason
                         REASONS.remove(player.getUniqueId());
-                        player.sendMessage(lang.getMessage("gui.prompt.cancelled_keep_reason", "reason", lang.getMessage("punishment.no_reason")));
+                        player.sendMessage(lang.getMessage("gui.prompt.cancelled_keep_reason", "reason", lang.getRawMessage("punishment.no_reason")));
                     } else {
                         String r = input.trim();
                         if (r.isEmpty()) {
-                            r = lang.getMessage("punishment.no_reason");
+                            r = lang.getRawMessage("punishment.no_reason");
                         }
                         REASONS.put(player.getUniqueId(), r);
                         player.sendMessage(lang.getMessage("gui.prompt.reason_set", "reason", r));
@@ -149,10 +149,10 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
         // Accept -> Green Wool
         ItemStack greenWool = new ItemStack(Material.GREEN_WOOL);
         ItemMeta greenWoolMeta = greenWool.getItemMeta();
-        greenWoolMeta.displayName(Component.text(lang.getMessage("gui.punishment_menu.accept")));
+        greenWoolMeta.displayName(Component.text(lang.getRawMessage("gui.punishment_menu.accept")));
         greenWool.setItemMeta(greenWoolMeta);
         contents.set(5, 8, ClickableItem.of(greenWool, e -> {
-            String reason = getReasonOrDefault(player);
+            String reason = getReasonOrDefault(player).toString();
             Long duration = getDuration(player);
             switch (punishmentType) {
                 case KICK -> PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, player, target, reason, null);

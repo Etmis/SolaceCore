@@ -20,10 +20,10 @@ public final class DisconnectScreenUtil {
 
     public static Component formatDisconnectScreen(boolean kick, String punishmentMessage, String reason, String operator, String time) {
         String title = valueOrFallback(punishmentMessage, "You have been punished.");
-        String reasonLabel = valueOrFallback(languageManager.getMessage("disconnect.reason_label"), "Reason");
-        String durationLabel = valueOrFallback(languageManager.getMessage("disconnect.duration_label"), "Duration");
-        String remainingLabel = valueOrFallback(languageManager.getMessage("disconnect.remaining_label"), "Remaining");
-        String issuedByLabel = valueOrFallback(languageManager.getMessage("disconnect.issued_by_label"), "Issued by");
+        String reasonLabel = valueOrFallback(languageManager.getRawMessage("disconnect.reason_label"), "Reason");
+        String durationLabel = valueOrFallback(languageManager.getRawMessage("disconnect.duration_label"), "Duration");
+        String remainingLabel = valueOrFallback(languageManager.getRawMessage("disconnect.remaining_label"), "Remaining");
+        String issuedByLabel = valueOrFallback(languageManager.getRawMessage("disconnect.issued_by_label"), "Issued by");
         String reasonValue = valueOrFallback(reason, "No reason specified");
         String operatorValue = valueOrFallback(operator, "System");
 

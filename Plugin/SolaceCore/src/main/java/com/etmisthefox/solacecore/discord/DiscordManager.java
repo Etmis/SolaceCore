@@ -2,6 +2,7 @@ package com.etmisthefox.solacecore.discord;
 
 import com.etmisthefox.solacecore.SolaceCore;
 import com.etmisthefox.solacecore.database.Database;
+import com.etmisthefox.solacecore.managers.DiscordPermissionManager;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -18,14 +19,16 @@ public final class DiscordManager {
     private final SolaceCore plugin;
     private final Database database;
     private final LanguageManager lang;
+    private final DiscordPermissionManager discordPermissionManager;
     private JDA jda;
     private TextChannel logsChannel;
     private DiscordCommandHandler commandHandler;
 
-    public DiscordManager(SolaceCore plugin, Database database, LanguageManager lang) {
+    public DiscordManager(SolaceCore plugin, Database database, LanguageManager lang, DiscordPermissionManager discordPermissionManager) {
         this.plugin = plugin;
         this.database = database;
         this.lang = lang;
+        this.discordPermissionManager = discordPermissionManager;
         DiscordManager.instance = this;
     }
 
@@ -80,7 +83,7 @@ public final class DiscordManager {
         // Remove old guild-scoped commands so users don't see duplicates (global + guild).
         jda.getGuilds().forEach(guild -> guild.updateCommands().queue());
 
-        commandHandler = new DiscordCommandHandler(database, lang);
+        commandHandler = new DiscordCommandHandler(database, lang, discordPermissionManager);
         commandHandler.registerCommands(jda);
 
         jda.addEventListener(commandHandler);
@@ -124,4 +127,3 @@ public final class DiscordManager {
         }
     }
 }
-

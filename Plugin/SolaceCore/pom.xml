@@ -6,13 +6,13 @@
 
     <groupId>com.etmisthefox</groupId>
     <artifactId>SolaceCore</artifactId>
-    <version>Alpha-v1.0.0</version>
+    <version>Alpha-v1.1.0</version>
     <packaging>jar</packaging>
 
     <name>SolaceCore</name>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -71,7 +71,7 @@
                 <executions>
                     <execution>
                         <id>start_server</id>
-                        <phase>verify</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.8-R0.1-SNAPSHOT</version>
+            <version>26.2.build.112-stable</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -132,7 +132,7 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.dv8tion</groupId>

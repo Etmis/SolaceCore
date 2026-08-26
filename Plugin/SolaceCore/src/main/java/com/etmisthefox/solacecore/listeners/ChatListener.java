@@ -48,7 +48,7 @@ public final class ChatListener implements Listener {
                         event.getPlayer().sendMessage(
                                 lang.getMessage(
                                         "chat.blocked_temp_mute",
-                                        "reason", punishment.getReason(),
+                                        "reason", punishment.getReason().toString(),
                                         "operator", punishment.getOperator(),
                                         "remaining", remaining
                                 )

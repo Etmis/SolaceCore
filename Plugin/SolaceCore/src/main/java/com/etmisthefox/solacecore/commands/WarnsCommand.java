@@ -63,7 +63,7 @@ public final class WarnsCommand implements CommandExecutor {
                 .collect(Collectors.toList());
 
         if (warnings.isEmpty()) {
-            sender.sendMessage(Component.text(lang.getMessage("warns.none", "player", targetName), NamedTextColor.GRAY));
+            sender.sendMessage(lang.getMessage("warns.none", "player", targetName));
             return true;
         }
 
@@ -94,9 +94,9 @@ public final class WarnsCommand implements CommandExecutor {
             String startStr = start != null ? DATE_FMT.format(start) : "-";
 
             Component line = Component.text(reason, NamedTextColor.WHITE)
-                    .append(Component.text(lang.getMessage("warns.separator_by"), NamedTextColor.DARK_GRAY))
+                    .append(lang.getMessage("warns.separator_by").colorIfAbsent(NamedTextColor.DARK_GRAY))
                     .append(Component.text(operator, NamedTextColor.YELLOW))
-                    .append(Component.text(lang.getMessage("warns.separator_at"), NamedTextColor.DARK_GRAY))
+                    .append(lang.getMessage("warns.separator_at").colorIfAbsent(NamedTextColor.DARK_GRAY))
                     .append(Component.text(startStr, NamedTextColor.AQUA));
 
             sender.sendMessage(line);

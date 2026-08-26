@@ -127,6 +127,7 @@ gui:
     duration_set: "Doba nastavena: {duration}"
     reason_set: "Důvod nastaven: {reason}"
 
+# Discord nepodporuje barvy
 discord:
   action_logged: "✅ Akce **{action}** zaznamenána pro hráče **{player}**."
   player_not_found: "❌ Hráč **{player}** nebyl nalezen na serveru."
@@ -164,6 +165,7 @@ discord:
         ipban: "Důvod IP banu"
   reply:
     cannot_determine_user: "❌ Chyba: Nelze určit uživatele."
+    no_permission: "❌ Nemáš oprávnění použít tento Discord příkaz."
     player_name_required: "❌ Je vyžadováno jméno hráče."
     player_not_online: "❌ Hráč **{player}** není online."
     ban_success: "✅ Hráč **{player}** byl zabanován."
@@ -187,7 +189,6 @@ discord:
     na: "N/A"
 
 websocket:
-  connected: "Připojeno k Minecraft serveru"
   success:
     ban: "Hráč {player} byl zabanován"
     tempban: "Hráč {player} byl dočasně zabanován"
@@ -215,4 +216,3 @@ disconnect:
   duration_label: "Doba"
   remaining_label: "Zbývá"
   issued_by_label: "Vydal"
-

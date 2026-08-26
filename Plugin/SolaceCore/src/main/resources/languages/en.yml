@@ -164,6 +164,7 @@ discord:
         ipban: "Reason for IP ban"
   reply:
     cannot_determine_user: "❌ Error: Cannot determine user."
+    no_permission: "❌ You do not have permission to use this Discord command."
     player_name_required: "❌ Player name is required."
     player_not_online: "❌ Player **{player}** is not online."
     ban_success: "✅ Player **{player}** has been banned."
@@ -187,7 +188,6 @@ discord:
     na: "N/A"
 
 websocket:
-  connected: "Connected to Minecraft server"
   success:
     ban: "Player {player} has been banned"
     tempban: "Player {player} has been temporarily banned"
@@ -215,4 +215,3 @@ disconnect:
   duration_label: "Duration"
   remaining_label: "Remaining"
   issued_by_label: "Issued by"
-
