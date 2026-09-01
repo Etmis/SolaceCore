@@ -4,6 +4,7 @@ import com.etmisthefox.solacecore.commands.*;
 import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.websocket.ModeratorWebSocketServer;
 import com.etmisthefox.solacecore.websocket.ModCommandHandler;
+import com.etmisthefox.solacecore.web.EmbeddedWebServer;
 import com.etmisthefox.inv.InventoryManager;
 import com.etmisthefox.solacecore.listeners.ChatListener;
 import com.etmisthefox.solacecore.listeners.ConnectionListener;
@@ -21,6 +22,7 @@ public final class SolaceCore extends JavaPlugin {
 
     private Database database;
     private ModeratorWebSocketServer wsServer;
+    private EmbeddedWebServer webServer;
     private LanguageManager lang;
     private DiscordPermissionManager discordPermissionManager;
     private DiscordManager discordManager;
@@ -68,6 +70,15 @@ public final class SolaceCore extends JavaPlugin {
             getLogger().info("WebSocket server disabled in config.yml.");
         }
 
+        if (getConfig().getBoolean("web.enabled", true)) {
+            webServer = new EmbeddedWebServer(this, database);
+            try {
+                webServer.start();
+            } catch (Exception e) {
+                getLogger().severe("Failed to start embedded web server: " + e.getMessage());
+            }
+        }
+
         if (getConfig().getBoolean("discord_bot.enabled", false)) {
             try {
                 discordManager = new DiscordManager(this, database, lang, discordPermissionManager);
@@ -89,7 +100,7 @@ public final class SolaceCore extends JavaPlugin {
         registerCommand("unmute", new UnmuteCommand(database, lang));
         registerCommand("menu", new MenuCommand(database, lang, this, inventoryManager));
         registerCommand("warns", new WarnsCommand(database, lang));
-        registerCommand("reload", new ReloadLanguageCommand(this, lang));
+        registerCommand("reload", new ReloadCommand(this, lang, discordPermissionManager));
 
         getServer().getPluginManager().registerEvents(new ConnectionListener(database, lang), this);
         getServer().getPluginManager().registerEvents(new ChatListener(database, lang), this);
@@ -108,6 +119,9 @@ public final class SolaceCore extends JavaPlugin {
     @Override
     public void onDisable() {
         ChatInputUtil.cancelAll();
+        if (webServer != null) {
+            webServer.stop();
+        }
         if (database != null) {
             database.closeConnection();
         }
