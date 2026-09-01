@@ -89,7 +89,7 @@ public final class SolaceCore extends JavaPlugin {
         registerCommand("unmute", new UnmuteCommand(database, lang));
         registerCommand("menu", new MenuCommand(database, lang, this, inventoryManager));
         registerCommand("warns", new WarnsCommand(database, lang));
-        registerCommand("reload", new ReloadLanguageCommand(this, lang));
+        registerCommand("reload", new ReloadCommand(this, lang, discordPermissionManager));
 
         getServer().getPluginManager().registerEvents(new ConnectionListener(database, lang), this);
         getServer().getPluginManager().registerEvents(new ChatListener(database, lang), this);
