@@ -3,7 +3,7 @@ version: '1.0.0'
 main: com.etmisthefox.solacecore.SolaceCore
 api-version: '1.21'
 authors: [ EtmisTheFox ]
-description: skibidi plugin
+description: SolaceCore — Lightweight moderation and admin tools for Minecraft servers
 website: https://etmisthefox.com
 commands:
   kick:
