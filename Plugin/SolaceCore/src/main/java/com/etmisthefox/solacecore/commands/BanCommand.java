@@ -4,11 +4,9 @@ import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.PunishmentUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public final class BanCommand implements CommandExecutor {
@@ -35,8 +33,9 @@ public final class BanCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getRawMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        Player target = Bukkit.getPlayerExact(args[0]);
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, sender, target, args[0], reason, null);
+        String targetName = args[0];
+
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, sender, targetName, reason, null);
         return true;
     }
 }

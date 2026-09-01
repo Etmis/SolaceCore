@@ -1007,7 +1007,7 @@ app.get('/api/skins/:id/bust', async (req, res) => {
 
     // Fetch from upstream and (re)cache with in-flight dedupe
     const doRefresh = async () => {
-      const upstream = `https://starlightskins.lunareclipse.studio/render/default/${encodeURIComponent(id)}/bust`
+      const upstream = `https://visage.surgeplay.com/bust/${encodeURIComponent(id)}`
       try {
         const buf = await fetchBuffer(upstream)
         await fs.writeFile(filePath, buf)

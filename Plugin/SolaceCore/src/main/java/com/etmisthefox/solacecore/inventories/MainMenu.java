@@ -12,6 +12,7 @@ import com.etmisthefox.solacecore.models.Punishment;
 import com.etmisthefox.solacecore.utils.TimeUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -80,8 +81,8 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
                 String rawType = p.getPunishmentType() != null ? p.getPunishmentType().toLowerCase() : null;
                 Component typeLabel = rawType != null ? lang.getMessage("gui.common.punishment_type." + rawType) : null;
                 if (typeLabel == null) typeLabel = lang.getMessage("gui.common.unknown");
-                sb.append(typeLabel);
-                if (p.getReason() != null && !p.getReason().toString().isEmpty()) {
+                sb.append(PlainTextComponentSerializer.plainText().serialize(typeLabel));
+                if (p.getReason() != null && !p.getReason().isEmpty()) {
                     sb.append(" - ").append(p.getReason());
                 }
                 if (p.getOperator() != null && !p.getOperator().isEmpty()) {
@@ -90,7 +91,8 @@ public record MainMenu(Database database, LanguageManager lang, Plugin plugin, I
                 if (p.getDuration() != null && p.getDuration() > 0) {
                     sb.append(" [").append(TimeUtil.formatDuration(p.getDuration())).append("]");
                 }
-                sb.append(p.getIsActive() ? " " + lang.getMessage("gui.common.active_tag") : " " + lang.getMessage("gui.common.inactive_tag"));
+                Component activeState = p.getIsActive() ? lang.getMessage("gui.common.active_tag") : lang.getMessage("gui.common.inactive_tag");
+                sb.append(" ").append(PlainTextComponentSerializer.plainText().serialize(activeState));
                 punishLore.add(Component.text(sb.toString()));
                 count++;
             }

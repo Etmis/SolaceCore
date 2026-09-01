@@ -11,26 +11,23 @@ usage:
   tempipban: "Usage: /tempipban <player> <duration> [reason]"
   warn: "Usage: /warn <player> [reason]"
   warns: "Usage: /warns <player> [page]"
+  reload: "Usage: /reload <language|discord|config>"
+reload:
+  language_success: "Language files reloaded successfully."
+  config_success: "Config reloaded successfully."
+  discord_success: "Discord permissions reloaded successfully."
+  discord_disabled: "Discord bot is disabled in config.yml."
 punishment:
   no_reason: "No reason specified"
   already_muted: "Player {player} is already muted."
   already_banned: "Player {player} is already banned."
-  not_muted: "Player {player} isn't muted."
-  not_banned: "Player {player} isn't banned."
-  mute_success: "Player {player} has been muted. Reason: {reason}"
-  tempmute_success: "{operator} has temporarily muted player {player} for {time}. Reason: {reason}"
-  unmute_success: "Player {player} has been unmuted."
-  ban_success: "Player {player} has been banned. Reason: {reason}"
-  tempban_success: "{operator} has temporarily banned player {player} for {time}. Reason: {reason}"
-  unban_success: "Player {player} has been unbanned."
-  kick_success: "Player {player} has been kicked. Reason: {reason}"
-  ipban_success: "Player {player} has been IP-banned. Reason: {reason}"
-  tempipban_success: "{operator} has temporarily IP-banned player {player} for {time}. Reason: {reason}"
-  warn_success: "Player {player} has been warned. Reason: {reason}"
-  kick_protection: "Player {player} can't be kicked because they have kick protection"
-  ban_protection: "Player {player} can't be banned because they have ban protection"
-  mute_protection: "Player {player} can't be muted because they have mute protection"
-  warn_protection: "Player {player} can't be warned because they have warn protection"
+  not_muted: "Player {player} is not muted."
+  not_banned: "Player {player} is not banned."
+protection:
+  kick_protection: "Player {player} cannot be kicked because they have kick protection"
+  ban_protection: "Player {player} cannot be banned because they have ban protection"
+  mute_protection: "Player {player} cannot be muted because they have mute protection"
+  warn_protection: "Player {player} cannot be warned because they have warning protection"
 broadcast:
   player_kicked: "{player} was kicked. Reason: {reason}"
   player_banned: "{player} was banned. Reason: {reason}"
@@ -42,11 +39,23 @@ broadcast:
   player_tempmuted: "{player} was temporarily muted for {time}. Reason: {reason}"
   player_unmuted: "{player} was unmuted."
   player_warned: "{player} was warned. Reason: {reason}"
+moderator_messages:
+  mute_success: "You have successfully muted player {player}. Reason: {reason}"
+  tempmute_success: "You have successfully temporarily muted player {player} for {time}. Reason: {reason}"
+  unmute_success: "You have successfully unmuted player {player}."
+  ban_success: "You have successfully banned player {player}. Reason: {reason}"
+  tempban_success: "You have successfully temporarily banned player {player} for {time}. Reason: {reason}"
+  unban_success: "You have successfully unbanned player {player}."
+  kick_success: "You have successfully kicked player {player}. Reason: {reason}"
+  ipban_success: "You have successfully IP-banned player {player}. Reason: {reason}"
+  tempipban_success: "You have successfully temporarily IP-banned player {player} for {time}. Reason: {reason}"
+  warn_success: "You have successfully warned player {player}. Reason: {reason}"
 player_messages:
   kicked: "You have been kicked!"
   banned: "You have been permanently banned from this server!"
   tempbanned: "You have been temporarily banned from this server!"
   tempipbanned: "You have been temporarily IP-banned from this server!"
+  tempipban: "You are temporarily IP-banned on this server!"
   muted: "You have been muted! Reason: {reason}. Muted by: {operator}"
   tempmuted: "You have been temporarily muted for {time}! Reason: {reason}. Muted by: {operator}"
   unmuted: "Your mute has been lifted! You can chat again. Unmuted by: {operator}"
@@ -54,7 +63,6 @@ player_messages:
   warned: "You have been warned! Reason: {reason}. Warned by: {operator}"
   ban: "You are permanently banned on this server!"
   tempban: "You are temporarily banned on this server!"
-  tempipban: "You are temporarily IP-banned on this server!"
   ipban: "You are permanently IP-banned on this server!"
 errors:
   invalid_time: "Invalid time format. Use: 10m, 1h, 2d."
@@ -111,7 +119,7 @@ gui:
     title: "Punishment Menu"
     back: "Back"
     time:
-      title: "Punishment Time"
+      title: "Punishment Duration"
       lore_line1: "Click to set punishment duration"
       current: "Current: {value}"
     reason:
@@ -126,10 +134,10 @@ gui:
     cancelled_keep_reason: "Operation cancelled. Reason kept: {reason}"
     duration_set: "Duration set: {duration}"
     reason_set: "Reason set: {reason}"
-
+# Discord does not support colors
 discord:
   action_logged: "✅ Action **{action}** logged for player **{player}**."
-  player_not_found: "❌ Player **{player}** not found on server."
+  player_not_found: "❌ Player **{player}** not found on the server."
   invalid_duration: "❌ Invalid duration format. Use: 10m, 1h, 2d."
   error: "❌ Error: {error}"
   commands:
@@ -155,7 +163,7 @@ discord:
       description: "Temporarily IP ban a player"
     option:
       player: "Player name"
-      duration: "Duration (e.g., 7d, 24h, 30m)"
+      duration: "Duration (for example: 7d, 24h, 30m)"
       reason:
         ban: "Reason for ban"
         kick: "Reason for kick"
@@ -163,7 +171,7 @@ discord:
         warn: "Reason for warning"
         ipban: "Reason for IP ban"
   reply:
-    cannot_determine_user: "❌ Error: Cannot determine user."
+    cannot_determine_user: "❌ Error: Could not determine the user."
     no_permission: "❌ You do not have permission to use this Discord command."
     player_name_required: "❌ Player name is required."
     player_not_online: "❌ Player **{player}** is not online."
@@ -175,8 +183,8 @@ discord:
     warn_success: "✅ Player **{player}** has been warned."
     tempban_success: "✅ Player **{player}** has been temporarily banned."
     tempmute_success: "✅ Player **{player}** has been temporarily muted."
-    ipban_success: "✅ Player **{player}** has been IP banned."
-    tempipban_success: "✅ Player **{player}** has been temporarily IP banned."
+    ipban_success: "✅ Player **{player}** has been IP-banned."
+    tempipban_success: "✅ Player **{player}** has been temporarily IP-banned."
     unknown_command: "❌ Unknown command: {command}"
     database_error: "❌ Database error: {error}"
   log:
@@ -191,8 +199,8 @@ websocket:
   success:
     ban: "Player {player} has been banned"
     tempban: "Player {player} has been temporarily banned"
-    ipban: "Player {player} has been IP banned"
-    tempipban: "Player {player} has been temporarily IP banned"
+    ipban: "Player {player} has been IP-banned"
+    tempipban: "Player {player} has been temporarily IP-banned"
     unban: "Player {player} has been unbanned"
     kick: "Player {player} has been kicked"
     warn: "Player {player} has been warned"

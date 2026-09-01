@@ -3,9 +3,8 @@ discord:
   default_permissions: []
 
   # Per-account permissions by Discord user ID
-  # You can use full nodes (solacecore.discord.ban) or short names (ban)
-  # Wildcards are supported: solacecore.discord.* or *
+  # Use exact permission nodes only (e.g. solacecore.ban, solacecore.mute)
+  # use solacecore.* for all plugin permissions
   accounts:
     "123456789012345678":
-      - "solacecore.discord.*"
-
+      - "solacecore.*"

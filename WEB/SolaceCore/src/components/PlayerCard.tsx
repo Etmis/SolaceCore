@@ -12,13 +12,12 @@ export default function PlayerCard({
   <button className="card" onClick={onClick} title={`${player.name} (${player.uuid})`} aria-label={`View player ${player.name}`}>
       <div className="card-image">
         <img
-          src={getPlayerSkinUrl(player.name || player.uuid)}
+          src={getPlayerSkinUrl(player.name)}
           alt={`Player skin ${player.name}`}
           loading="lazy"
           onError={(e) => {
-            // simple fallback
-            (e.currentTarget as HTMLImageElement).src =
-              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="260"><rect width="100%" height="100%" fill="%23eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="sans-serif">Skin unavailable</text></svg>'
+            e.currentTarget.onerror = null
+            e.currentTarget.src = '/steve.png'
           }}
         />
       </div>

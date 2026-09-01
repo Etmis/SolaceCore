@@ -42,7 +42,9 @@ public final class TempmuteCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getRawMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPMUTE, sender, Bukkit.getPlayer(args[0]), reason, duration);
+        String targetName = args[0];
+
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPMUTE, sender, targetName, reason, duration);
         return true;
     }
 }

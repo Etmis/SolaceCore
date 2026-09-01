@@ -1,5 +1,6 @@
 package com.etmisthefox.solacecore.discord;
 
+import com.etmisthefox.solacecore.SolaceCore;
 import com.etmisthefox.solacecore.database.Database;
 import com.etmisthefox.solacecore.enums.PunishmentType;
 import com.etmisthefox.solacecore.managers.DiscordPermissionManager;
@@ -12,7 +13,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.JDA;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -23,18 +23,19 @@ import java.util.logging.Logger;
 
 public final class DiscordCommandHandler extends ListenerAdapter {
 
+    private final SolaceCore plugin;
     private final Database database;
     private final LanguageManager lang;
     private final DiscordPermissionManager discordPermissionManager;
 
-    public DiscordCommandHandler(Database database, LanguageManager lang, DiscordPermissionManager discordPermissionManager) {
+    public DiscordCommandHandler(SolaceCore plugin, Database database, LanguageManager lang, DiscordPermissionManager discordPermissionManager) {
+        this.plugin = plugin;
         this.database = database;
         this.lang = lang;
         this.discordPermissionManager = discordPermissionManager;
     }
 
     public void registerCommands(JDA jda) {
-        // Using updateCommands() to batch update all commands at once
         jda.updateCommands().addCommands(
                 Commands.slash("ban", lang.getRawMessage("discord.commands.ban.description"))
                         .addOption(OptionType.STRING, "player", lang.getRawMessage("discord.commands.option.player"), true)
@@ -83,13 +84,15 @@ public final class DiscordCommandHandler extends ListenerAdapter {
             return;
         }
 
-        String requiredPermission = discordPermissionManager.getRequiredPermission(commandName);
+        String requiredPermission = "solacecore." + commandName;
         if (!discordPermissionManager.hasPermission(member.getId(), requiredPermission)) {
             event.reply(lang.getRawMessage("discord.reply.no_permission")).setEphemeral(true).queue();
             return;
         }
 
-        String operator = member.getEffectiveName();
+        // Změna: Získáváme pouze jméno uživatele z Discordu jako String
+        String operatorName = member.getUser().getName();
+
         var playerOption = event.getOption("player");
         if (playerOption == null) {
             event.reply(lang.getRawMessage("discord.reply.player_name_required")).setEphemeral(true).queue();
@@ -100,17 +103,15 @@ public final class DiscordCommandHandler extends ListenerAdapter {
         var reasonOption = event.getOption("reason");
         String reason = reasonOption != null ? reasonOption.getAsString() : lang.getRawMessage("punishment.no_reason");
 
-        // Defer reply immediately
         event.deferReply(true).queue();
 
-        // Run on main server thread
-        Bukkit.getScheduler().runTask(Bukkit.getPluginManager().getPlugin("SolaceCore"), () -> {
+        Bukkit.getScheduler().runTask(plugin, () -> {
             try {
                 Player target = Bukkit.getPlayerExact(playerName);
 
                 switch (commandName) {
                     case "ban" -> {
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, Bukkit.getConsoleSender(), target, playerName, reason, null, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, operatorName, playerName, reason, null);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.ban_success", "player", playerName)).queue();
                     }
                     case "unban" -> {
@@ -119,7 +120,7 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                         database.unpunishPlayer(playerName, "ipban");
                         DiscordManager dm = DiscordManager.getInstance();
                         if (dm != null) {
-                            dm.logActionToDiscord("UNBAN", operator, playerName, "Unbanned via Discord", null);
+                            dm.logActionToDiscord("UNBAN", operatorName, playerName, "Unbanned via Discord", null);
                         }
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.unban_success", "player", playerName)).queue();
                     }
@@ -128,7 +129,7 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                             event.getHook().sendMessage(lang.getRawMessage("discord.reply.player_not_online", "player", playerName)).queue();
                             return;
                         }
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, Bukkit.getConsoleSender(), target, reason, null, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, operatorName, playerName, reason, null);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.kick_success", "player", playerName)).queue();
                     }
                     case "mute" -> {
@@ -136,7 +137,7 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                             event.getHook().sendMessage(lang.getRawMessage("discord.reply.player_not_online", "player", playerName)).queue();
                             return;
                         }
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.MUTE, Bukkit.getConsoleSender(), target, reason, null, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.MUTE, operatorName, playerName, reason, null);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.mute_success", "player", playerName)).queue();
                     }
                     case "unmute" -> {
@@ -144,7 +145,7 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                         database.unpunishPlayer(playerName, "tempmute");
                         DiscordManager dm = DiscordManager.getInstance();
                         if (dm != null) {
-                            dm.logActionToDiscord("UNMUTE", operator, playerName, "Unmuted via Discord", null);
+                            dm.logActionToDiscord("UNMUTE", operatorName, playerName, "Unmuted via Discord", null);
                         }
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.unmute_success", "player", playerName)).queue();
                     }
@@ -153,14 +154,14 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                             event.getHook().sendMessage(lang.getRawMessage("discord.reply.player_not_online", "player", playerName)).queue();
                             return;
                         }
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, Bukkit.getConsoleSender(), target, reason, null, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, operatorName, playerName, reason, null);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.warn_success", "player", playerName)).queue();
                     }
                     case "tempban" -> {
                         var durationOption = event.getOption("duration");
                         String duration = durationOption != null ? durationOption.getAsString() : "1d";
                         Long durationSeconds = TimeUtil.parseDuration(duration);
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPBAN, Bukkit.getConsoleSender(), target, playerName, reason, durationSeconds, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPBAN, operatorName, playerName, reason, durationSeconds);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.tempban_success", "player", playerName)).queue();
                     }
                     case "tempmute" -> {
@@ -171,18 +172,18 @@ public final class DiscordCommandHandler extends ListenerAdapter {
                         var durationOption = event.getOption("duration");
                         String duration = durationOption != null ? durationOption.getAsString() : "1h";
                         Long durationSeconds = TimeUtil.parseDuration(duration);
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPMUTE, Bukkit.getConsoleSender(), target, reason, durationSeconds, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPMUTE, operatorName, playerName, reason, durationSeconds);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.tempmute_success", "player", playerName)).queue();
                     }
                     case "ipban" -> {
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, Bukkit.getConsoleSender(), target, playerName, reason, null, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, operatorName, playerName, reason, null);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.ipban_success", "player", playerName)).queue();
                     }
                     case "tempipban" -> {
                         var durationOption = event.getOption("duration");
                         String duration = durationOption != null ? durationOption.getAsString() : "1d";
                         Long durationSeconds = TimeUtil.parseDuration(duration);
-                        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPIPBAN, Bukkit.getConsoleSender(), target, playerName, reason, durationSeconds, "discord");
+                        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPIPBAN, operatorName, playerName, reason, durationSeconds);
                         event.getHook().sendMessage(lang.getRawMessage("discord.reply.tempipban_success", "player", playerName)).queue();
                     }
                     default -> event.getHook().sendMessage(lang.getRawMessage("discord.reply.unknown_command", "command", commandName)).queue();

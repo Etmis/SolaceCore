@@ -12,6 +12,7 @@ import com.etmisthefox.solacecore.utils.ChatInputUtil;
 import com.etmisthefox.solacecore.utils.PunishmentUtil;
 import com.etmisthefox.solacecore.utils.TimeUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -117,7 +118,7 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
         ItemStack bookAndQuill = new ItemStack(Material.WRITABLE_BOOK);
         ItemMeta bookAndQuillMeta = bookAndQuill.getItemMeta();
         bookAndQuillMeta.displayName(Component.text(lang.getRawMessage("gui.punishment_menu.reason.title")));
-        String currentReason = getReasonOrDefault(player).toString();
+        String currentReason = PlainTextComponentSerializer.plainText().serialize(getReasonOrDefault(player));
         List<Component> reasonLore = new ArrayList<>();
         reasonLore.add(Component.text(lang.getRawMessage("gui.punishment_menu.reason.lore_line1")));
         reasonLore.add(Component.text(lang.getRawMessage("gui.punishment_menu.reason.current", "value", currentReason)));
@@ -152,28 +153,30 @@ public record PunishmentMenu(Database database, LanguageManager lang, Plugin plu
         greenWoolMeta.displayName(Component.text(lang.getRawMessage("gui.punishment_menu.accept")));
         greenWool.setItemMeta(greenWoolMeta);
         contents.set(5, 8, ClickableItem.of(greenWool, e -> {
-            String reason = getReasonOrDefault(player).toString();
+            String reason = PlainTextComponentSerializer.plainText().serialize(getReasonOrDefault(player));
             Long duration = getDuration(player);
+            String targetName = target.getName(); // Získáme jméno hráče
+
             switch (punishmentType) {
-                case KICK -> PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, player, target, reason, null);
-                case BAN -> PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, player, target, reason, null);
+                case KICK -> PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, player, targetName, reason, null);
+                case BAN -> PunishmentUtil.executePunishment(database, lang, PunishmentType.BAN, player, targetName, reason, null);
                 case TEMPBAN -> {
                     if (duration == null) {
                         player.sendMessage(lang.getMessage("errors.invalid_time"));
                         return;
                     }
-                    PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPBAN, player, target, reason, duration);
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPBAN, player, targetName, reason, duration);
                 }
-                case IPBAN -> PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, player, target, reason, null);
-                case MUTE -> PunishmentUtil.executePunishment(database, lang, PunishmentType.MUTE, player, target, reason, null);
+                case IPBAN -> PunishmentUtil.executePunishment(database, lang, PunishmentType.IPBAN, player, targetName, reason, null);
+                case MUTE -> PunishmentUtil.executePunishment(database, lang, PunishmentType.MUTE, player, targetName, reason, null);
                 case TEMPMUTE -> {
                     if (duration == null) {
                         player.sendMessage(lang.getMessage("errors.invalid_time"));
                         return;
                     }
-                    PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPMUTE, player, target, reason, duration);
+                    PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPMUTE, player, targetName, reason, duration);
                 }
-                case WARN -> PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, player, target, reason, null);
+                case WARN -> PunishmentUtil.executePunishment(database, lang, PunishmentType.WARN, player, targetName, reason, null);
             }
             player.closeInventory();
             REASONS.remove(player.getUniqueId());

@@ -26,7 +26,7 @@ public final class UnbanCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        if (!perms.canUseCommand(sender, "unban")) {
+        if (perms.cantUseCommand(sender, "unban")) {
             sender.sendMessage(lang.getMessage("errors.no_permission"));
             return true;
         }
@@ -50,7 +50,7 @@ public final class UnbanCommand implements CommandExecutor {
                 PunishmentType punishmentType = PunishmentType.valueOf(punishment.getPunishmentType().toUpperCase());
                 if (punishmentType == PunishmentType.BAN || punishmentType == PunishmentType.TEMPBAN || punishmentType == PunishmentType.IPBAN || punishmentType == PunishmentType.TEMPIPBAN) {
                     database.unpunishPlayer(targetName, punishmentType.toString().toLowerCase());
-                    sender.sendMessage(lang.getMessage("punishment.unban_success", "player", targetName));
+                    sender.sendMessage(lang.getMessage("moderator_messages.unban_success", "player", targetName));
                     return true;
                 }
             }

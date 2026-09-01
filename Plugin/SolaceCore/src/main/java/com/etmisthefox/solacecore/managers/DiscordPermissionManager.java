@@ -10,30 +10,21 @@ import java.util.Locale;
 
 public final class DiscordPermissionManager {
 
-    private static final String DISCORD_PERMISSION_PREFIX = "solacecore.discord.";
-
     private final SolaceCore plugin;
     private final File permissionsFile;
     private FileConfiguration permissionsConfig;
 
     public DiscordPermissionManager(SolaceCore plugin) {
         this.plugin = plugin;
-        this.permissionsFile = new File(plugin.getDataFolder(), "permissions.yml");
+        this.permissionsFile = new File(plugin.getDataFolder(), "discord.yml");
         reload();
     }
 
     public void reload() {
         if (!permissionsFile.exists()) {
-            plugin.saveResource("permissions.yml", false);
+            plugin.saveResource("discord.yml", false);
         }
         permissionsConfig = YamlConfiguration.loadConfiguration(permissionsFile);
-    }
-
-    public String getRequiredPermission(String commandName) {
-        if (commandName == null || commandName.isBlank()) {
-            return null;
-        }
-        return DISCORD_PERMISSION_PREFIX + commandName.toLowerCase(Locale.ROOT);
     }
 
     public boolean hasPermission(String discordUserId, String requiredPermission) {
@@ -54,32 +45,14 @@ public final class DiscordPermissionManager {
                 continue;
             }
 
-            String node = normalizeNode(rawNode);
-            if ("*".equals(node) || "solacecore.*".equals(node) || (DISCORD_PERMISSION_PREFIX + "*").equals(node)) {
+            String node = rawNode.trim().toLowerCase(Locale.ROOT);
+            if ("*".equals(node) || "solacecore.*".equals(node)) {
                 return true;
             }
             if (requiredPermission.equals(node)) {
                 return true;
             }
-            if (node.endsWith(".*")) {
-                String prefix = node.substring(0, node.length() - 1);
-                if (requiredPermission.startsWith(prefix)) {
-                    return true;
-                }
-            }
         }
         return false;
     }
-
-    private String normalizeNode(String rawNode) {
-        String node = rawNode.trim().toLowerCase(Locale.ROOT);
-        if (node.isEmpty()) {
-            return node;
-        }
-        if (!node.contains(".")) {
-            return DISCORD_PERMISSION_PREFIX + node;
-        }
-        return node;
-    }
 }
-

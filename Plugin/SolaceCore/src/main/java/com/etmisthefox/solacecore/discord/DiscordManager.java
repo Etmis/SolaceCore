@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -83,7 +84,7 @@ public final class DiscordManager {
         // Remove old guild-scoped commands so users don't see duplicates (global + guild).
         jda.getGuilds().forEach(guild -> guild.updateCommands().queue());
 
-        commandHandler = new DiscordCommandHandler(database, lang, discordPermissionManager);
+        commandHandler = new DiscordCommandHandler(plugin, database, lang, discordPermissionManager);
         commandHandler.registerCommands(jda);
 
         jda.addEventListener(commandHandler);
@@ -101,13 +102,13 @@ public final class DiscordManager {
     private String formatActionLog(String actionType, String operator, String targetPlayer, String reason, String duration) {
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(actionType).append("**\n");
-        sb.append("**").append(lang.getMessage("discord.log.operator")).append(":** ").append(operator).append("\n");
-        sb.append("**").append(lang.getMessage("discord.log.player")).append(":** ").append(targetPlayer).append("\n");
-        sb.append("**").append(lang.getMessage("discord.log.reason")).append(":** ").append(reason != null ? reason : lang.getMessage("discord.log.na")).append("\n");
+        sb.append("**").append(PlainTextComponentSerializer.plainText().serialize(lang.getMessage("discord.log.operator"))).append(":** ").append(operator).append("\n");
+        sb.append("**").append(PlainTextComponentSerializer.plainText().serialize(lang.getMessage("discord.log.player"))).append(":** ").append(targetPlayer).append("\n");
+        sb.append("**").append(PlainTextComponentSerializer.plainText().serialize(lang.getMessage("discord.log.reason"))).append(":** ").append(reason != null ? reason : PlainTextComponentSerializer.plainText().serialize(lang.getMessage("discord.log.na"))).append("\n");
         if (duration != null) {
-            sb.append("**").append(lang.getMessage("discord.log.duration")).append(":** ").append(duration).append("\n");
+            sb.append("**").append(PlainTextComponentSerializer.plainText().serialize(lang.getMessage("discord.log.duration"))).append(":** ").append(duration).append("\n");
         }
-        sb.append("**").append(lang.getMessage("discord.log.time")).append(":** <t:").append(System.currentTimeMillis() / 1000).append(":R>\n");
+        sb.append("**").append(PlainTextComponentSerializer.plainText().serialize(lang.getMessage("discord.log.time"))).append(":** <t:").append(System.currentTimeMillis() / 1000).append(":R>\n");
         return sb.toString();
     }
 

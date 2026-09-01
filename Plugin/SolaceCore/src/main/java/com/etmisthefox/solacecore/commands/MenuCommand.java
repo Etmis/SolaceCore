@@ -35,7 +35,7 @@ public final class MenuCommand implements CommandExecutor {
             return true;
         }
 
-        if (!perms.canUseCommand(player, "menu")) {
+        if (perms.cantUseCommand(player, "menu")) {
             player.sendMessage(lang.getMessage("errors.no_permission"));
             return true;
         }

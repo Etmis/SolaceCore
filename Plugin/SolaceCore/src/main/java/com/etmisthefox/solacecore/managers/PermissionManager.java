@@ -27,9 +27,9 @@ public final class PermissionManager {
 
     // --- Příkazy ---
 
-    public boolean canUseCommand(CommandSender sender, String commandType) {
+    public boolean cantUseCommand(CommandSender sender, String commandType) {
         String node = getCommandPermission(commandType);
-        return node != null && sender.hasPermission(node);
+        return node == null || !sender.hasPermission(node);
     }
 
     public String getCommandPermission(String commandType) {

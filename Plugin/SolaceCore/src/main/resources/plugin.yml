@@ -55,8 +55,8 @@ commands:
     usage: /menu <player>
     permission: solacecore.menu
   reload:
-    description: Reload language files
-    usage: /reload
+    description: Reload plugin parts
+    usage: /reload <language|discord|config>
     permission: solacecore.reload
 permissions:
   solacecore.kick:
@@ -89,5 +89,5 @@ permissions:
     default: op
   solacecore.menu:
     default: op
-  solacecore.reloadlang:
+  solacecore.reload:
     default: op

@@ -43,8 +43,9 @@ public final class TempipbanCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getRawMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        Player target = Bukkit.getPlayerExact(args[0]);
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPIPBAN, sender, target, args[0], reason, duration);
+        String targetName = args[0];
+
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.TEMPIPBAN, sender, targetName, reason, duration);
         return true;
     }
 }

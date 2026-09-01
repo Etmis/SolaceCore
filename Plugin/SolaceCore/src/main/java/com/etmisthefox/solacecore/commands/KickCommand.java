@@ -34,7 +34,9 @@ public final class KickCommand implements CommandExecutor {
         }
         String reason = reasonBuilder.isEmpty() ? lang.getRawMessage("punishment.no_reason") : reasonBuilder.toString();
 
-        PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, sender, Bukkit.getPlayer(args[0]), reason, null);
+        String targetName = args[0];
+
+        PunishmentUtil.executePunishment(database, lang, PunishmentType.KICK, sender, targetName, reason, null);
         return true;
     }
 }
