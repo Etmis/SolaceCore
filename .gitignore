@@ -64,3 +64,5 @@ Plugin/SolaceCore/server/
 
 # Web server cache (runtime only)
 WEB/SolaceCore/server/cache/
+
+Plugin/SolaceCore/src/main/resources/web/
