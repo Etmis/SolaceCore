@@ -98,7 +98,7 @@ public final class SolaceCore extends JavaPlugin {
     private void registerCommand(String name, CommandExecutor executor) {
         var command = getCommand(name);
         if (command == null) {
-            getLogger().severe("Command '" + name + "' not found in plugin.yml!");
+            getLogger().severe("Command '" + name + "' not found in paper-paper-plugin.yml!");
             return;
         }
         command.setExecutor(executor);

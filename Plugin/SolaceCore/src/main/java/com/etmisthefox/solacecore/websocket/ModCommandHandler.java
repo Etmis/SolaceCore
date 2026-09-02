@@ -16,6 +16,8 @@ import java.util.List;
 
 public class ModCommandHandler {
 
+    //TODO: Plugin vždy vrátí success, i když se nepodaří provést příkaz. Např. při unban, pokud hráč není zabanovaný, vrátí se success, ale ve skutečnosti se nic nestalo. Opravit to.
+
     private final Database database;
     private final LanguageManager languageManager;
     private final Plugin plugin;

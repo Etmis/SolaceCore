@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 
 public final class PermissionManager {
 
-    // Příkazová oprávnění (podle plugin.yml)
+    // Příkazová oprávnění (podle paper-plugin.yml)
     public static final String COMMAND_KICK = "solacecore.kick";
     public static final String COMMAND_BAN = "solacecore.ban";
     public static final String COMMAND_IPBAN = "solacecore.ipban";
