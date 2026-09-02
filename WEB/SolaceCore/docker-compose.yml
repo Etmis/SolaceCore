@@ -1,10 +1,9 @@
-version: "3.9"
-
 services:
   db:
     image: mariadb:11
     container_name: solacecore-db
     restart: unless-stopped
+    profiles: ["db"]
     environment:
       TZ: ${TZ:-Europe/Prague}
       MARIADB_DATABASE: ${DB_NAME:-solacecore}
@@ -21,66 +20,87 @@ services:
       retries: 60
       start_period: 30s
 
-  api:
+  app:
     build:
       context: .
-      dockerfile: Dockerfile.api
-    container_name: solacecore-api
+      dockerfile: Dockerfile
+    container_name: solacecore-app
+    profiles: ["db"]
     environment:
       TZ: ${TZ:-Europe/Prague}
       PORT: "${PORT:-3001}"
+      DB_ENABLED: "true"
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: "${DB_PORT:-3306}"
       DB_USER: ${DB_USER:-root}
       DB_PASSWORD: ${DB_PASSWORD:-}
       DB_NAME: ${DB_NAME:-solacecore}
       WS_HOST: ${WS_HOST:-host.docker.internal}
-      WS_PORT: "${WS_PORT:-8080}"
-      ENABLE_CORS: "${ENABLE_CORS:-1}"
-      # JWT secret for moderator authentication
-      # IMPORTANT: Change this in production!
-      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-secure-random-string-in-production-use-at-least-64-characters}
+      WS_PORT: "${WS_PORT:-40394}"
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-secure-random-string-in-production}
+      NODE_ENV: production
     depends_on:
       db:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "${API_PORT:-3001}:3001"
+      - "${PORT:-3001}:3001"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3001/api/health || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
+      interval: 30s
+      timeout: 10s
+      retries: 3
       start_period: 10s
 
-  web:
+  app-web:
     build:
       context: .
+      dockerfile: Dockerfile
     container_name: solacecore-web
-    depends_on:
-      api:
-        condition: service_started
+    profiles: ["web"]
     environment:
       TZ: ${TZ:-Europe/Prague}
-      HOST: ${HOST:-0.0.0.0}
+      PORT: "${PORT:-3001}"
+      DB_ENABLED: "false"
+      DB_HOST: ""
+      DB_PORT: "3306"
+      DB_USER: ""
+      DB_PASSWORD: ""
+      DB_NAME: ${DB_NAME:-solacecore}
+      WS_HOST: ${WS_HOST:-host.docker.internal}
+      WS_PORT: "${WS_PORT:-40394}"
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-secure-random-string-in-production}
+      NODE_ENV: production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "${WEB_PORT:-8082}:80"
+      - "${PORT:-3001}:3001"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   phpmyadmin:
-    image: phpmyadmin:latest
+    image: phpmyadmin:5.2
     container_name: solacecore-phpmyadmin
     restart: unless-stopped
     depends_on:
       db:
         condition: service_started
     environment:
-      - PMA_HOST=${PMA_HOST:-db}
-      - PMA_PORT=${PMA_PORT:-3306}
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - PMA_USER=${DB_USER:-root}
+      - PMA_PASSWORD=${DB_PASSWORD:-}
     ports:
       - "8081:80"
+    profiles:
+      - dev
 
 volumes:
   db-data:

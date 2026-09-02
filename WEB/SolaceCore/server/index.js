@@ -13,9 +13,16 @@ import WebSocket from 'ws'
 
 // Basic config from env
 const PORT = parseInt(process.env.PORT || '3001', 10)
+let ENABLE_MINECRAFT_WS = process.env.ENABLE_MINECRAFT_WS !== 'false'
 const WS_HOST = process.env.WS_HOST || '127.0.0.1'
 const WS_PORT = parseInt(process.env.WS_PORT || '8080', 10)
-const DB_HOST = process.env.DB_HOST || '127.0.0.1'
+const DB_HOST_RAW = (process.env.DB_HOST || '').trim()
+const DB_ENABLED = process.env.DB_ENABLED === 'true'
+  ? true
+  : process.env.DB_ENABLED === 'false'
+    ? false
+    : DB_HOST_RAW.length > 0
+const DB_HOST = DB_HOST_RAW || '127.0.0.1'
 const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10)
 const DB_USER = process.env.DB_USER || 'root'
 const DB_PASSWORD = process.env.DB_PASSWORD || ''
@@ -33,22 +40,32 @@ const SPA_INDEX_PATH = path.join(FRONTEND_DIST, 'index.html')
 
 // WebSocket klient pro komunikaci s Minecraft serverem
 let minecraftWs = null
+let minecraftWsConnected = false
 const wsUrl = `ws://${WS_HOST}:${WS_PORT}`
 
 function connectToMinecraft() {
+  if (!ENABLE_MINECRAFT_WS) {
+    console.log('ℹ️  Minecraft WebSocket disabled (ENABLE_MINECRAFT_WS=false)')
+    minecraftWsConnected = false
+    return
+  }
+
   try {
     minecraftWs = new WebSocket(wsUrl)
     
     minecraftWs.on('open', () => {
-      console.log(`Connected to Minecraft server at ${wsUrl}`)
+      console.log(`✓ Connected to Minecraft server at ${wsUrl}`)
+      minecraftWsConnected = true
     })
     
     minecraftWs.on('error', (error) => {
       console.error('WebSocket error:', error.message)
+      minecraftWsConnected = false
     })
     
     minecraftWs.on('close', () => {
       console.log('Disconnected from Minecraft server, reconnecting in 5s...')
+      minecraftWsConnected = false
       setTimeout(connectToMinecraft, 5000)
     })
 
@@ -63,6 +80,7 @@ function connectToMinecraft() {
     })
   } catch (e) {
     console.error('Failed to connect to Minecraft WebSocket:', e.message)
+    minecraftWsConnected = false
     setTimeout(connectToMinecraft, 5000)
   }
 }
@@ -75,8 +93,56 @@ function sendToMinecraft(message) {
   }
 }
 
-// Create a MySQL/MariaDB pool
-const pool = mysql.createPool({
+async function persistEnvSetting(key, value) {
+  const envPath = path.join(__dirname, '..', '.env')
+  let envContent = ''
+  try {
+    envContent = await fs.readFile(envPath, 'utf-8')
+  } catch {
+    envContent = ''
+  }
+
+  const lines = envContent.split(/\r?\n/)
+  const matchedIndex = lines.findIndex(line => line.startsWith(`${key}=`))
+  const entry = `${key}=${value}`
+
+  if (matchedIndex >= 0) {
+    lines[matchedIndex] = entry
+  } else {
+    lines.push(entry)
+  }
+
+  await fs.writeFile(envPath, `${lines.filter(Boolean).join('\n')}\n`, 'utf-8')
+}
+
+async function setMinecraftWebSocketEnabled(enabled) {
+  ENABLE_MINECRAFT_WS = !!enabled
+  process.env.ENABLE_MINECRAFT_WS = String(enabled)
+
+  if (!enabled) {
+    if (minecraftWs) {
+      try {
+        minecraftWs.close()
+      } catch (e) {
+        console.warn('Failed to close Minecraft WebSocket:', e.message)
+      }
+    }
+    minecraftWs = null
+    minecraftWsConnected = false
+    await persistEnvSetting('ENABLE_MINECRAFT_WS', String(enabled))
+    return { enabled: false, connected: false, host: WS_HOST, port: WS_PORT }
+  }
+
+  if (!minecraftWs || minecraftWs.readyState === WebSocket.CLOSED || minecraftWs.readyState === WebSocket.CLOSING) {
+    connectToMinecraft()
+  }
+
+  await persistEnvSetting('ENABLE_MINECRAFT_WS', String(enabled))
+  return { enabled: true, connected: minecraftWsConnected, host: WS_HOST, port: WS_PORT }
+}
+
+// Create a MySQL/MariaDB pool only when the database is enabled.
+const pool = DB_ENABLED ? mysql.createPool({
   host: DB_HOST,
   port: DB_PORT,
   user: DB_USER,
@@ -87,20 +153,35 @@ const pool = mysql.createPool({
   queueLimit: 0,
   // Return Date objects; we'll convert in JS
   dateStrings: false,
-})
+}) : null
+
+function requireDatabase(res) {
+  if (!pool) {
+    return res.status(503).json({ error: 'Database is disabled in this deployment' })
+  }
+  return null
+}
 
 const app = express()
 
 // Middleware for parsing JSON
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
 
-// If you access API from a different origin without Vite proxy, enable CORS
+// CORS is disabled by default (frontend and backend are together)
+// Enable only if needed for specific development scenarios
 if (process.env.ENABLE_CORS === '1') {
   app.use(cors())
 }
 
-// Serve built frontend files when available
-app.use(express.static(FRONTEND_DIST, { index: false }))
+// Serve built frontend files when available (SPA with fallback to index.html)
+const frontendExists = fssync.existsSync(SPA_INDEX_PATH)
+if (frontendExists) {
+  app.use(express.static(FRONTEND_DIST, { 
+    index: false,
+    maxAge: '1d',
+    etag: false
+  }))
+}
 
 // ========================================
 // AUTH MIDDLEWARE
@@ -149,6 +230,10 @@ async function loadPermissionsFromRoleIds(roleIds) {
 
 // Middleware pro ověření JWT tokenu
 async function authenticateModerator(req, res, next) {
+  if (!pool) {
+    return res.status(503).json({ error: 'Database is disabled in this deployment' })
+  }
+
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No token provided' })
@@ -170,11 +255,18 @@ async function authenticateModerator(req, res, next) {
 
     const moderatorRoleIds = parseModeratorRoles(moderator.roles)
     const permissions = await loadPermissionsFromRoleIds(moderatorRoleIds)
+    const [adminRoleRows] = await pool.query(
+      'SELECT id FROM roles WHERE name = ? LIMIT 1',
+      ['Admin']
+    )
+    const adminRoleId = adminRoleRows?.[0]?.id
+    const isSuperAdmin = !!adminRoleId && moderatorRoleIds.includes(Number(adminRoleId))
 
     req.moderator = {
       id: moderator.id,
       username: moderator.username,
-      permissions
+      permissions,
+      isSuperAdmin
     }
     next()
   } catch (err) {
@@ -198,6 +290,10 @@ function requirePermission(permission) {
 
 // POST /api/auth/login - Přihlášení moderátora
 app.post('/api/auth/login', async (req, res) => {
+  if (!pool) {
+    return res.status(503).json({ error: 'Database is disabled in this deployment' })
+  }
+
   const { username, password } = req.body
   
   if (!username || !password) {
@@ -249,7 +345,8 @@ app.get('/api/auth/me', authenticateModerator, async (req, res) => {
   res.json({
     id: req.moderator.id,
     username: req.moderator.username,
-    permissions: req.moderator.permissions
+    permissions: req.moderator.permissions,
+    is_superadmin: !!req.moderator.isSuperAdmin
   })
 })
 
@@ -856,11 +953,64 @@ app.get('/api/mod/actions', authenticateModerator, async (req, res) => {
 })
 
 app.get('/api/health', async (_req, res) => {
+  if (!pool) {
+    return res.json({
+      ok: true,
+      db: false,
+      databaseDisabled: true,
+      minecraft: {
+        enabled: ENABLE_MINECRAFT_WS,
+        connected: minecraftWsConnected,
+        host: WS_HOST,
+        port: WS_PORT
+      }
+    })
+  }
+
   try {
     const [rows] = await pool.query('SELECT 1 AS ok')
-    res.json({ ok: true, db: rows?.[0]?.ok === 1 })
+    res.json({ 
+      ok: true, 
+      db: rows?.[0]?.ok === 1,
+      minecraft: {
+        enabled: ENABLE_MINECRAFT_WS,
+        connected: minecraftWsConnected,
+        host: WS_HOST,
+        port: WS_PORT
+      }
+    })
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e?.message || e) })
+  }
+})
+
+// GET /api/health/minecraft - Minecraft WebSocket status
+app.get('/api/health/minecraft', (_req, res) => {
+  res.json({
+    enabled: ENABLE_MINECRAFT_WS,
+    connected: minecraftWsConnected,
+    host: WS_HOST,
+    port: WS_PORT,
+    url: ENABLE_MINECRAFT_WS ? wsUrl : null
+  })
+})
+
+app.post('/api/settings/minecraft/ws', authenticateModerator, async (req, res) => {
+  if (!req.moderator.isSuperAdmin) {
+    return res.status(403).json({ error: 'Only the superadmin can change this setting' })
+  }
+
+  const { enabled } = req.body
+
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ error: 'enabled must be boolean' })
+  }
+
+  try {
+    const status = await setMinecraftWebSocketEnabled(enabled)
+    res.json(status)
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) })
   }
 })
 

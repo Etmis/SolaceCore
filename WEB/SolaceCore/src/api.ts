@@ -253,3 +253,15 @@ export async function assignRole(modId: number, roleId: number): Promise<{ succe
 export async function removeRole(modId: number, roleId: number): Promise<{ success: boolean; message: string }> {
   return del(`/api/moderators/${modId}/roles/${roleId}`, true)
 }
+
+// ========================================
+// SYSTEM STATUS API
+// ========================================
+
+export async function getMinecraftStatus(): Promise<{ enabled: boolean; connected: boolean; host: string; port: number; url: string | null }> {
+  return get('/api/health/minecraft')
+}
+
+export async function setMinecraftWebSocketEnabled(enabled: boolean): Promise<{ enabled: boolean; connected: boolean; host: string; port: number }> {
+  return post('/api/settings/minecraft/ws', { enabled }, true)
+}

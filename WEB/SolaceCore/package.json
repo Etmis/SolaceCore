@@ -8,6 +8,8 @@
     "dev:web": "vite",
     "dev:api": "nodemon --watch server --ext js,mjs --exec node server/index.js",
     "build": "tsc -b && vite build",
+    "start": "node server/index.js",
+    "setup": "node scripts/setup.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

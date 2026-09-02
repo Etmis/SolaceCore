@@ -3,10 +3,10 @@ import { useAuth } from '../contexts/AuthContext'
 import {
   getRoles, createRole, updateRole, deleteRole,
   getModerators, createModerator, updateModerator, deleteModerator,
-  getModeratorRoles, assignRole, removeRole
+  getModeratorRoles, assignRole, removeRole, getMinecraftStatus, setMinecraftWebSocketEnabled
 } from '../api'
 import type { Role } from '../types'
-import { FaPlus, FaEdit, FaTrash, FaUserShield, FaUsers, FaKey, FaCheck, FaTimes } from 'react-icons/fa'
+import { FaPlus, FaEdit, FaTrash, FaUserShield, FaUsers, FaKey, FaCheck, FaTimes, FaGamepad } from 'react-icons/fa'
 import './AdminPanel.css'
 
 interface Moderator {
@@ -16,8 +16,8 @@ interface Moderator {
 }
 
 export default function AdminPanel() {
-  const { hasPermission } = useAuth()
-  const [activeTab, setActiveTab] = useState<'moderators' | 'roles'>('moderators')
+  const { hasPermission, isSuperAdmin } = useAuth()
+  const [activeTab, setActiveTab] = useState<'moderators' | 'roles' | 'minecraft'>('moderators')
   
   // Moderators
   const [moderators, setModerators] = useState<Moderator[]>([])
@@ -50,6 +50,10 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // Minecraft
+  const [minecraftStatus, setMinecraftStatus] = useState<any>(null)
+  const [minecraftLoading, setMinecraftLoading] = useState(false)
 
   const ALL_PERMISSIONS: Record<string, boolean> = {
     ban: false,
@@ -85,6 +89,34 @@ export default function AdminPanel() {
       setError(err.message || 'Failed to load data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadMinecraftStatus = async () => {
+    setMinecraftLoading(true)
+    try {
+      const status = await getMinecraftStatus()
+      setMinecraftStatus(status)
+    } catch (err: any) {
+      console.error('Failed to load Minecraft status:', err)
+    } finally {
+      setMinecraftLoading(false)
+    }
+  }
+
+  const toggleMinecraftWebSocket = async () => {
+    if (!minecraftStatus || !isSuperAdmin) return
+
+    setMinecraftLoading(true)
+    try {
+      const updated = await setMinecraftWebSocketEnabled(!minecraftStatus.enabled)
+      setMinecraftStatus(updated)
+      setSuccess(`Minecraft WebSocket ${updated.enabled ? 'enabled' : 'disabled'} successfully`)
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (err: any) {
+      setError(err.message || 'Failed to update Minecraft WebSocket setting')
+    } finally {
+      setMinecraftLoading(false)
     }
   }
 
@@ -278,6 +310,12 @@ export default function AdminPanel() {
             onClick={() => setActiveTab('roles')}
           >
             <FaKey /> Roles ({roles.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'minecraft' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('minecraft'); loadMinecraftStatus() }}
+          >
+            <FaGamepad /> Minecraft
           </button>
         </div>
       </div>
@@ -622,6 +660,96 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+
+      {/* MINECRAFT TAB */}
+      {activeTab === 'minecraft' && (
+        <div className="admin-section">
+          <div className="section-header">
+            <h2><FaGamepad /> Minecraft Integration</h2>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={loadMinecraftStatus}
+              disabled={minecraftLoading}
+            >
+              {minecraftLoading ? '...' : '⟳ Refresh'}
+            </button>
+          </div>
+
+          {minecraftStatus && (
+            <div className="minecraft-status">
+              <div className="settings-card">
+                <div className="settings-row">
+                  <div>
+                    <div className="status-label">WebSocket</div>
+                    <div className="status-value">
+                      {minecraftStatus.enabled ? 'Enabled' : 'Disabled'}
+                    </div>
+                  </div>
+                  {isSuperAdmin ? (
+                    <button
+                      className={`btn ${minecraftStatus.enabled ? 'btn-danger' : 'btn-success'} btn-sm`}
+                      onClick={toggleMinecraftWebSocket}
+                      disabled={minecraftLoading}
+                    >
+                      {minecraftLoading ? '...' : minecraftStatus.enabled ? 'Disable' : 'Enable'}
+                    </button>
+                  ) : (
+                    <span className="permission-note">Superadmin only</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="status-item">
+                <div className="status-label">Status</div>
+                <div className={`status-value ${minecraftStatus.enabled ? '' : 'disabled'}`}>
+                  {minecraftStatus.enabled ? (
+                    <>
+                      <FaCheck /> {minecraftStatus.connected ? 'Connected' : 'Disconnected'}
+                    </>
+                  ) : (
+                    <>
+                      <FaTimes /> Disabled
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {minecraftStatus.enabled && (
+                <div className="status-item">
+                  <div className="status-label">Connection</div>
+                  <div className="status-value">
+                    {minecraftStatus.host}:{minecraftStatus.port}
+                  </div>
+                </div>
+              )}
+
+              <div className="status-info">
+                <p>
+                  The Minecraft WebSocket integration allows moderators to execute in-game actions
+                  from this dashboard (bans, kicks, warnings, mutes, etc.).
+                </p>
+                {!minecraftStatus.enabled && (
+                  <p className="note">
+                    <strong>Note:</strong> WebSocket is currently disabled. You can enable it with the toggle above.
+                  </p>
+                )}
+                {minecraftStatus.enabled && !minecraftStatus.connected && (
+                  <p className="warning">
+                    <strong>Warning:</strong> WebSocket is enabled but not connected. Make sure your
+                    Minecraft plugin is running on <code>{minecraftStatus.host}:{minecraftStatus.port}</code>.
+                  </p>
+                )}
+                {minecraftStatus.enabled && minecraftStatus.connected && (
+                  <p className="success">
+                    ✓ Connected to Minecraft server. Moderator actions will be executed in real-time.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
+

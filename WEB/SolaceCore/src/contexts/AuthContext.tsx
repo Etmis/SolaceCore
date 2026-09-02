@@ -9,6 +9,7 @@ interface AuthContextType {
   login: () => Promise<void>
   logout: () => void
   hasPermission: (permission: string) => boolean
+  isSuperAdmin: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -52,8 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return moderator?.permissions?.[permission] === true
   }
 
+  const isSuperAdmin = moderator?.is_superadmin === true
+
   return (
-    <AuthContext.Provider value={{ moderator, loading, login, logout, hasPermission }}>
+    <AuthContext.Provider value={{ moderator, loading, login, logout, hasPermission, isSuperAdmin }}>
       {children}
     </AuthContext.Provider>
   )
