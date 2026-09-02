@@ -140,10 +140,11 @@ async function main() {
 
       // Create first admin account from values entered by the user
       console.log('\n👤 First Administrator Account\n')
-      const adminUsername = await question('Admin username [admin]: ')
+      const adminUsernameInput = await question('Admin username [admin]: ')
       const adminPass = await question('Admin password: ')
+      const adminUsername = adminUsernameInput || 'admin' // Rovnou přiřadíme default
 
-      if (adminUsername && adminPass) {
+      if (adminPass) { // Kontrolujeme už jen heslo
         const bcrypt = (await import('bcryptjs')).default
         const hash = await bcrypt.hash(adminPass, 10)
         const [adminRole] = await connection.query(
@@ -155,9 +156,9 @@ async function main() {
         try {
           await connection.query(
             'INSERT INTO moderators (username, password_hash, is_active, roles) VALUES (?, ?, ?, ?)',
-            [adminUsername || 'admin', hash, true, JSON.stringify([adminRoleId])]
+            [adminUsername, hash, true, JSON.stringify([adminRoleId])]
           )
-          console.log(`✓ Admin account created: ${adminUsername || 'admin'}`)
+          console.log(`✓ Admin account created: ${adminUsername}`)
         } catch (e) {
           if (e.message.includes('Duplicate')) {
             console.log(`⚠️  Admin account already exists`)
@@ -165,7 +166,7 @@ async function main() {
             console.error(`❌ Error creating admin account: ${e.message}`)
           }
         }
-      } else if (!adminPass) {
+      } else {
         console.log('⚠️  Admin password is required. No account created.')
       }
     } else {
