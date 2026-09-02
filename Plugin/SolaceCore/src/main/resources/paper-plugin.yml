@@ -5,59 +5,6 @@ api-version: '1.21'
 authors: [ EtmisTheFox ]
 description: SolaceCore — Lightweight moderation and admin tools for Minecraft servers
 website: https://etmisthefox.com
-commands:
-  kick:
-    description: Kicks a player from the server
-    usage: /kick <player> [reason]
-    permission: solacecore.kick
-  ban:
-    description: Ban a player
-    usage: /ban <player> [reason]
-    permission: solacecore.ban
-  ipban:
-    description: IP-ban a player
-    usage: /ipban <player> [reason]
-    permission: solacecore.ipban
-  tempban:
-    description: Temporarily ban a player
-    usage: /tempban <player> <time> [reason]
-    permission: solacecore.tempban
-  tempipban:
-    description: Temporarily IP-ban a player
-    usage: /tempipban <player> <time> [reason]
-    permission: solacecore.tempipban
-  unban:
-    description: Unban a player
-    usage: /unban <player>
-    permission: solacecore.unban
-  mute:
-    description: Mute a player
-    usage: /mute <player> [reason]
-    permission: solacecore.mute
-  tempmute:
-    description: Temporarily mute a player
-    usage: /tempmute <player> <time> [reason]
-    permission: solacecore.tempmute
-  unmute:
-    description: Unmute a player
-    usage: /unmute <player>
-    permission: solacecore.unmute
-  warn:
-    description: Warn a player
-    usage: /warn <player> [reason]
-    permission: solacecore.warn
-  warns:
-    description: View warnings of a player
-    usage: /warns <player>
-    permission: solacecore.warns
-  menu:
-    description: Main menu
-    usage: /menu <player>
-    permission: solacecore.menu
-  reload:
-    description: Reload plugin parts
-    usage: /reload <language|discord|config>
-    permission: solacecore.reload
 permissions:
   solacecore.kick:
     default: op

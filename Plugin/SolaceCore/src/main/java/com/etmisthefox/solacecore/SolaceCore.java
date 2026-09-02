@@ -13,10 +13,15 @@ import com.etmisthefox.solacecore.managers.LanguageManager;
 import com.etmisthefox.solacecore.utils.ChatInputUtil;
 import com.etmisthefox.solacecore.utils.DisconnectScreenUtil;
 import com.etmisthefox.solacecore.discord.DiscordManager;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
+import java.util.List;
 
 public final class SolaceCore extends JavaPlugin {
 
@@ -107,14 +112,31 @@ public final class SolaceCore extends JavaPlugin {
     }
 
     private void registerCommand(String name, CommandExecutor executor) {
-        var command = getCommand(name);
-        if (command == null) {
-            getLogger().severe("Command '" + name + "' not found in paper-paper-plugin.yml!");
-            return;
-        }
-        command.setExecutor(executor);
-    }
+        Command cmd = new Command(name) {
+            @Override
+            public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
+                return executor.onCommand(sender, this, commandLabel, args);
+            }
 
+            @Override
+            public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException {
+                if (executor instanceof TabCompleter) {
+                    List<String> completions = ((TabCompleter) executor).onTabComplete(sender, this, alias, args);
+                    if (completions != null) {
+                        return completions;
+                    }
+                }
+                return super.tabComplete(sender, alias, args);
+            }
+        };
+
+        // Automatické nastavení permisse podle názvu příkazu z paper-plugin.yml
+        cmd.setPermission("solacecore." + name.toLowerCase());
+        cmd.setPermissionMessage("You don't have permission to use this command.");
+
+        // Zapsání do CommandMap
+        getServer().getCommandMap().register(this.getName().toLowerCase(), cmd);
+    }
 
     @Override
     public void onDisable() {
