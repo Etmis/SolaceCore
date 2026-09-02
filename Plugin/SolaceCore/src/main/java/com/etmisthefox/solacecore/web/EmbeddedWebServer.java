@@ -129,11 +129,31 @@ public final class EmbeddedWebServer {
                 JsonObject body = body(exchange);
                 String username = string(body, "username");
                 String password = string(body, "password");
-                if (username == null || password == null) { sendError(exchange, 400, "Username and password required"); return; }
+                if (username == null || password == null) {
+                    sendError(exchange, 400, "Username and password required");
+                    return;
+                }
                 try (var statement = database.getConnection().prepareStatement("SELECT id, username, password_hash, is_active FROM moderators WHERE username = ? LIMIT 1")) {
                     statement.setString(1, username);
                     try (var rows = statement.executeQuery()) {
-                        if (!rows.next() || !rows.getBoolean("is_active") || !BCrypt.check(password, rows.getString("password_hash"))) { sendError(exchange, 401, "Invalid credentials"); return; }
+                        if (!rows.next()) {
+                            plugin.getLogger().warning("Web Login Failed: User '" + username + "' not found in DB.");
+                            sendError(exchange, 401, "Invalid credentials");
+                            return;
+                        }
+                        if (!rows.getBoolean("is_active")) {
+                            plugin.getLogger().warning("Web Login Failed: User '" + username + "' is not active.");
+                            sendError(exchange, 401, "Invalid credentials");
+                            return;
+                        }
+                        String hash = rows.getString("password_hash");
+                        if (!BCrypt.check(password, hash)) {
+                            plugin.getLogger().warning("Web Login Failed: Password mismatch for '" + username + "'.");
+                            sendError(exchange, 401, "Invalid credentials");
+                            return;
+                        }
+
+                        // Přihlášení úspěšné
                         int id = rows.getInt("id");
                         sendJson(exchange, 200, Map.of("token", token(id, username), "moderator", Map.of("id", id, "username", username)));
                     }
@@ -227,8 +247,8 @@ public final class EmbeddedWebServer {
         String command = action + " " + player;
         if ("tempban".equals(action) || "tempmute".equals(action) || "tempipban".equals(action)) command += " " + number(body, "duration");
         if (body.has("reason") && !body.get("reason").isJsonNull()) command += " " + body.get("reason").getAsString();
-            String finalCommand = command;
-            runOnMainThread(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand));
+        String finalCommand = command;
+        runOnMainThread(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand));
         sendJson(exchange, 200, Map.of("success", true, "message", "Action queued"));
     }
 
@@ -334,6 +354,17 @@ public final class EmbeddedWebServer {
 
     private static final class BCrypt {
         private BCrypt() {}
-        static boolean check(String password, String hash) { try { return org.mindrot.jbcrypt.BCrypt.checkpw(password, hash); } catch (Exception ignored) { return false; } }
+        static boolean check(String password, String hash) {
+            try {
+                // Node.js často používá $2b$ nebo $2y$, Java jBCrypt zná jen $2a$
+                if (hash != null && (hash.startsWith("$2b$") || hash.startsWith("$2y$"))) {
+                    hash = "$2a$" + hash.substring(4);
+                }
+                return org.mindrot.jbcrypt.BCrypt.checkpw(password, hash);
+            } catch (Exception e) {
+                System.out.println("[SolaceCore] BCrypt error: " + e.getMessage());
+                return false;
+            }
+        }
     }
 }
