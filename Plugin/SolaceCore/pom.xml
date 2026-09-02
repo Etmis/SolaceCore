@@ -113,7 +113,7 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>26.2.build.112-stable</version>
+            <version>26.2.build.121-stable</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -137,7 +137,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>6.3.1</version>
+            <version>6.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
