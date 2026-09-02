@@ -37,6 +37,7 @@ export type Moderator = {
   id: number
   username: string
   permissions: Record<string, boolean>
+  is_superadmin?: boolean
 }
 
 export type Role = {

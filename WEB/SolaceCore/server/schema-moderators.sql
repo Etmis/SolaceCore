@@ -26,14 +26,6 @@ INSERT INTO roles (name, permissions) VALUES
 ('Helper', '{"ban": false, "tempban": false, "unban": false, "warn": true, "kick": false, "mute": false, "tempmute": false, "unmute": false, "ipban": false, "tempipban": false, "manageRoles": false, "viewActions": false}')
 ON DUPLICATE KEY UPDATE name=name;
 
--- Příklad vytvoření testovacího moderátora (heslo: "admin123")
--- Hash vygenerován pomocí: node server/generate-password.js admin123
-INSERT INTO moderators (username, password_hash) VALUES 
-('admin', '$2a$10$5CV47OmyVDWdXzdD.TrMxO4b3s//1v3XKEnxxb.cfk5vrlIgDQMZa')
-ON DUPLICATE KEY UPDATE username=username;
+-- První moderátor se vytváří během setup.js podle jména a hesla, které zadá uživatel.
+-- Tato tabulka nesmí obsahovat hardcoded superadmina.
 
--- Přiřadit Admin roli testovacímu moderátorovi do JSON pole moderators.roles
-UPDATE moderators m
-JOIN roles r ON r.name = 'Admin'
-SET m.roles = JSON_ARRAY(r.id)
-WHERE m.username = 'admin' AND (m.roles IS NULL OR JSON_LENGTH(m.roles) = 0);
